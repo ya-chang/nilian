@@ -1,0 +1,45 @@
+/* src/renderer/components/chat/LoadingSpinner.css */
+/* 加载状态样式 */
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.loading-spinner__circle {
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner--small .loading-spinner__circle {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.loading-spinner--medium .loading-spinner__circle {
+  width: 24px;
+  height: 24px;
+}
+
+.loading-spinner--large .loading-spinner__circle {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+}
+
+.loading-spinner__text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

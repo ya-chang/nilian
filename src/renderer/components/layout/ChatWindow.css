@@ -1,0 +1,48 @@
+/* src/renderer/components/layout/ChatWindow.css */
+/* 右侧聊天窗口样式 - 微信PC端风格 */
+
+.chat-window {
+  flex: 1;
+  min-width: 400px;
+  height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* 消息列表区域 */
+.chat-window__messages {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 20px;
+}
+
+/* 空状态 */
+.chat-window__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.chat-window__empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.chat-window__empty-title {
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.chat-window__empty-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}

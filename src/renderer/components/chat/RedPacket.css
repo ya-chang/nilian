@@ -1,0 +1,50 @@
+/* src/renderer/components/chat/RedPacket.css */
+/* 红包消息样式 — 微信风格 */
+
+.red-packet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #FA9D3B 0%, #EE5D3B 100%);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  min-width: 180px;
+  max-width: 240px;
+  transition: opacity 0.2s;
+}
+
+.red-packet:hover {
+  opacity: 0.9;
+}
+
+.red-packet--opened {
+  background: #E8E8E8;
+  color: var(--text-primary);
+}
+
+.red-packet__icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.red-packet__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.red-packet__message {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.red-packet__amount {
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+}

@@ -1,0 +1,31 @@
+/* src/renderer/components/layout/AppLayout.css */
+/* 三栏布局样式 */
+
+.app-layout {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+/* 占位视图 */
+.app-layout__placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  gap: 12px;
+}
+
+.app-layout__placeholder-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.app-layout__placeholder-text {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+}

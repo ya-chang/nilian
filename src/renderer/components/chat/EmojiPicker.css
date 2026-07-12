@@ -1,0 +1,41 @@
+/* src/renderer/components/chat/EmojiPicker.css */
+/* 表情选择器样式 */
+
+.emoji-picker {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 320px;
+  max-height: 200px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-medium);
+  overflow-y: auto;
+  z-index: 100;
+  padding: 8px;
+}
+
+.emoji-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+}
+
+.emoji-picker__item {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 20px;
+  transition: background-color 0.15s ease;
+}
+
+.emoji-picker__item:hover {
+  background: #F0F0F0;
+}

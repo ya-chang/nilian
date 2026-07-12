@@ -1,0 +1,196 @@
+/* src/renderer/components/chat/MessageBubble.css */
+/* 消息气泡样式 - 微信PC端风格 */
+
+/* 系统消息 */
+.message-system {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  margin: 4px 0;
+}
+
+.message-system__text {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 80%;
+}
+
+.message-system__time {
+  font-size: 11px;
+  color: #777777;
+  margin-top: 2px;
+}
+
+/* 消息行 */
+.message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 0 4px;
+}
+
+/* 用户消息：头像在右 */
+.message-row--self {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.message-row--self .message-avatar {
+  order: 2;
+}
+
+.message-row--self .message-content {
+  order: 1;
+}
+
+/* AI消息：头像在左 */
+.message-row--other {
+  flex-direction: row;
+}
+
+/* 头像 — 方形+6px圆角 */
+.message-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  background: #E8E8E8;
+}
+
+.message-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.message-avatar__emoji {
+  font-size: 24px;
+  line-height: 1;
+  user-select: none;
+}
+
+.message-avatar__emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* 消息内容 */
+.message-content {
+  display: flex;
+  flex-direction: column;
+  max-width: 60%;
+}
+
+.message-row--self .message-content {
+  align-items: flex-end;
+}
+
+.message-row--other .message-content {
+  align-items: flex-start;
+}
+
+/* 气泡 */
+.message-bubble {
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 6px;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.message-bubble--self {
+  background: var(--bubble-self);
+  color: #000;
+}
+
+.message-bubble--other {
+  background: var(--bubble-other);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* 气泡三角 */
+.message-bubble--self::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 12px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid var(--bubble-self);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.message-bubble--other::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 12px;
+  width: 0;
+  height: 0;
+  border-right: 6px solid var(--bubble-other);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.message-text {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+}
+
+/* 时间 */
+.message-time {
+  font-size: 11px;
+  color: #777777;
+  margin-top: 4px;
+}
+
+/* 正在输入动画 */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background: #999;
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}

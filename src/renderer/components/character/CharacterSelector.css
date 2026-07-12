@@ -1,0 +1,241 @@
+/* src/renderer/components/character/CharacterSelector.css */
+/* 角色选择器样式 */
+
+.character-selector {
+  padding: 4px 12px;
+  background: var(--bg-secondary);
+  min-height: 0;
+}
+
+.character-selector__header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.character-selector__add-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.character-selector__add-btn:hover {
+  background: var(--primary-hover);
+}
+
+.character-selector__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.character-selector__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.character-selector__item:hover {
+  background: #E9E9E9;
+}
+
+.character-selector__item--active {
+  background: var(--bg-primary);
+  border-left: 3px solid var(--primary-color);
+}
+
+.character-selector__avatar {
+  font-size: 18px;
+}
+
+.character-selector__name {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+/* 创建对话框 */
+.character-create-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.character-create-dialog {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 20px;
+  width: 420px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.character-create-dialog h3 {
+  margin: 0 0 16px 0;
+  font-size: var(--font-size-lg);
+}
+
+.character-create-field {
+  margin-bottom: 12px;
+}
+
+.character-create-field label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.character-create-field input,
+.character-create-field textarea,
+.character-create-field select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  outline: none;
+}
+
+.character-create-field textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.character-create-field input:focus,
+.character-create-field textarea:focus {
+  border-color: var(--primary-color);
+}
+
+.character-create-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.character-create-avatar-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  background: #E8E8E8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.character-create-avatar-preview:hover .character-create-avatar-overlay {
+  opacity: 1;
+}
+
+.character-create-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.character-create-avatar-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.character-create-templates {
+  display: flex;
+  gap: 8px;
+}
+
+.character-create-template {
+  flex: 1;
+  padding: 10px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.character-create-template:hover {
+  border-color: var(--primary-color);
+}
+
+.character-create-template--selected {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.character-create-template-name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.character-create-template-desc {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.character-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.character-create-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+.character-create-btn--cancel {
+  background: #F0F0F0;
+  color: var(--text-secondary);
+}
+
+.character-create-btn--confirm {
+  background: var(--primary-color);
+  color: white;
+}
+
+.character-create-btn--confirm:disabled {
+  background: #CCCCCC;
+  cursor: not-allowed;
+}

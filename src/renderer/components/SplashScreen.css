@@ -1,0 +1,61 @@
+/* src/renderer/components/SplashScreen.css */
+/* 启动画面样式 */
+
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #07C160 0%, #06AD56 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.splash-screen__content {
+  text-align: center;
+  color: white;
+}
+
+.splash-screen__icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+}
+
+.splash-screen__title {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.splash-screen__subtitle {
+  font-size: 16px;
+  opacity: 0.8;
+  margin-bottom: 40px;
+}
+
+.splash-screen__progress {
+  width: 240px;
+}
+
+.splash-screen__progress-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.splash-screen__progress-fill {
+  height: 100%;
+  background: white;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.splash-screen__status {
+  font-size: 14px;
+  opacity: 0.8;
+}

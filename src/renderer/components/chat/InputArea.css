@@ -1,0 +1,139 @@
+/* src/renderer/components/chat/InputArea.css */
+/* 聊天输入区域样式 - 微信PC端风格 */
+
+.input-area {
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+/* 引用栏 */
+.input-area__quote-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  background: #F7F7F7;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.input-area__quote-text {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.input-area__quote-close {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-area__quote-close:hover {
+  background: #E8E8E8;
+}
+
+/* 工具栏 */
+.input-area__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.input-area__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-area__emoji-wrapper {
+  position: relative;
+}
+
+.input-area__tool-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background-color 0.15s ease;
+}
+
+.input-area__tool-btn:hover {
+  background: #F0F0F0;
+}
+
+/* 输入编辑区 */
+.input-area__editor {
+  padding: 8px 16px;
+}
+
+.input-area__textarea {
+  width: 100%;
+  min-height: 60px;
+  max-height: 200px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.input-area__textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+/* 底部区域 */
+.input-area__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 16px 12px;
+}
+
+.input-area__footer-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+/* 发送按钮 */
+.input-area__send-btn {
+  padding: 6px 20px;
+  background: #F0F0F0;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 4px;
+  font-size: var(--font-size-sm);
+  cursor: not-allowed;
+  transition: all 0.15s ease;
+}
+
+.input-area__send-btn--active {
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+}
+
+.input-area__send-btn--active:hover {
+  background: var(--primary-hover);
+}

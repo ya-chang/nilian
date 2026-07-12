@@ -1,0 +1,45 @@
+/* src/renderer/components/chat/QuoteMessage.css */
+/* 引用消息样式 — 微信风格 */
+
+.quote-message {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.quote-message:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.quote-message__bar {
+  width: 3px;
+  background: var(--text-secondary);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.quote-message__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.quote-message__role {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.quote-message__text {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

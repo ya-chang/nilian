@@ -1,0 +1,151 @@
+/* src/renderer/components/layout/TitleBar.css */
+/* 聊天窗口标题栏样式 */
+
+.chat-window__titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.titlebar__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titlebar__name {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.titlebar__online {
+  font-size: var(--font-size-xs);
+  color: var(--online-color);
+  padding: 2px 6px;
+  background: rgba(7, 193, 96, 0.1);
+  border-radius: 4px;
+}
+
+/* 后缀输入框 */
+.titlebar__suffix-input-wrap {
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__suffix-input {
+  width: 140px;
+  height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  outline: none;
+  background: var(--bg-primary);
+}
+
+/* "⋯" 菜单按钮 */
+.titlebar__menu-wrapper {
+  position: relative;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__menu-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  transition: background-color 0.15s ease;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__menu-btn:hover {
+  background: #E8E8E8;
+}
+
+/* 下拉菜单 */
+.titlebar__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 160px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: var(--shadow-medium);
+  z-index: 100;
+  padding: 4px 0;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__dropdown-item {
+  padding: 8px 16px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.titlebar__dropdown-item:hover {
+  background: #F0F0F0;
+}
+
+.titlebar__dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.titlebar__dropdown-item--danger {
+  color: #ff4d4f;
+}
+
+.titlebar__dropdown-item--danger:hover {
+  background: #fff1f0;
+}
+
+/* 右侧窗口按钮 */
+.titlebar__right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background-color 0.15s ease;
+}
+
+.titlebar__btn:hover {
+  background: #E8E8E8;
+}
+
+.titlebar__btn--close:hover {
+  background: var(--unread-badge);
+  color: white;
+}

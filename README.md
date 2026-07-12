@@ -1,6 +1,8 @@
-# 拟恋 (ni-lian)
+﻿# 拟恋 (ni-lian)
 
 AI 虚拟伴侣桌面应用 —— 基于 Electron + React + TypeScript。
+
+![预览图](resources/preview.png)
 
 ## 功能
 

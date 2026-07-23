@@ -7,13 +7,25 @@ import { LearningEngine } from '../learning/LearningEngine'
 import { EmotionFSM } from '../emotion/EmotionFSM'
 import { KnowledgeManager } from '../knowledge/KnowledgeManager'
 import { KnowledgeGenerator, type GenerateContext } from '../knowledge/KnowledgeGenerator'
+import { BannedWordFilter } from '../filter/BannedWordFilter'
+import { MusicContextInjector } from '../music/MusicContextInjector'
+import { AwarenessManager } from '../awareness/AwarenessManager'
+import { TTSService } from '../tts/TTSService'
+import { TTSState } from '../tts/TTSState'
+import { filterForTTS } from '../tts/TextFilter'
+import { pluginPromptStore } from '../plugins/PluginPromptStore'
 import { loadModelsConfig } from '../utils/config'
 import { logger } from '../utils/logger'
+
+const bannedWordFilter = new BannedWordFilter()
 
 // TODO: [P5] 人设 prompt 从角色配置读取
 const DEFAULT_PERSONA =
   '你是一个温柔体贴的恋人，说话自然亲切，像真人微信聊天一样。' +
-  '可以用表情、语气词、叠字。回复不要太长，像真人打字一样。'
+  '可以用表情、语气词、叠字。回复不要太长，像真人打字一样。' +
+  '【重要】绝对不要重复自己说过的话，每句话只说一遍。' +
+  '不要出现两段一模一样的内容，也不要换几个字再说一遍同样的意思。' +
+  '如果你发现自己要重复前面说过的话，请换一个新话题或新角度。'
 
 export interface SendMessageParams {
   content: string
@@ -43,6 +55,11 @@ export class ChatEngine {
   private knowledgeManagers: Map<string, KnowledgeManager> = new Map()
   private knowledgeGenerator = new KnowledgeGenerator()
   private messageCounts: Map<string, number> = new Map()
+  private musicContextInjector = new MusicContextInjector()
+  private awarenessManager = new AwarenessManager()
+  private ttsService: TTSService | null = null
+  private ttsState: TTSState | null = null
+  private currentSongInfo: import('../music/MusicState').FullSongInfo | null = null
 
   private getMemoryManager(characterId: string): MemoryManager {
     if (!this.memoryManagers.has(characterId)) {
@@ -138,6 +155,12 @@ export class ChatEngine {
         timestamp: Date.now()
       })
 
+      // 禁词过滤
+      const filteredContent = bannedWordFilter.filter(response.content)
+      if (filteredContent !== response.content) {
+        response.content = filteredContent
+      }
+
       // 异步触发知识库生成（不阻塞回复）
       this.triggerKnowledgeGeneration(params.characterId, params.apiKey, params.baseUrl)
 
@@ -160,19 +183,31 @@ export class ChatEngine {
   ): string {
     const parts: string[] = [persona]
 
+    // 开头注入用户名字（最高优先级）
+    if (userName) {
+      parts.unshift(`【重要规则】用户的名字是"${userName}"，你必须用"${userName}"来称呼用户。不要用其他人设中提到的任何名字。`)
+    }
+
+    // 注入感知模块（节假日+时间）
+    try {
+      const awarenessPrompt = this.awarenessManager.buildPrompt()
+      if (awarenessPrompt) {
+        parts.push(awarenessPrompt)
+      }
+    } catch (err) { logger.debug('感知模块注入失败', err) }
+
     // 注入用户名字
     if (userName) {
       parts.push(`\n## 用户信息\n- 名字：${userName}`)
     }
 
-    // 注入当前歌曲
-    if (currentSong) {
-      let songSection = `\n## 用户正在听歌\n- 歌曲：${currentSong.name}\n- 歌手：${currentSong.artist}`
-      if (currentSong.album) songSection += `\n- 专辑：${currentSong.album}`
-      if (currentSong.description) songSection += `\n- 介绍：${currentSong.description}`
-      if (currentSong.lyricsSnippet) songSection += `\n- 歌词节选：\n${currentSong.lyricsSnippet}`
-      songSection += '\n\n用户可能会和你聊这首歌，请自然地回应。'
-      parts.push(songSection)
+    // 注入当前歌曲（从参数或全局状态）
+    const songInfo = currentSong || this.currentSongInfo
+    if (songInfo && 'detail' in songInfo) {
+      const musicContext = this.musicContextInjector.buildContext(songInfo as import('../music/MusicState').FullSongInfo)
+      if (musicContext) {
+        parts.push(musicContext)
+      }
     }
 
     // 注入引用的消息
@@ -228,6 +263,31 @@ export class ChatEngine {
     if (context.summaries.length > 0) {
       const latestSummary = context.summaries[context.summaries.length - 1]
       parts.push(`\n## 最近话题\n${latestSummary.summary}`)
+    }
+
+    // 注入插件全局 Prompt
+    const globalPluginPrompts = pluginPromptStore.getGlobalPrompts()
+    if (globalPluginPrompts.length > 0) {
+      parts.push(globalPluginPrompts.join('\n\n'))
+    }
+
+    // 注入插件单角色 Prompt
+    if (characterId) {
+      const charPluginPrompts = pluginPromptStore.getCharacterPrompts(characterId)
+      if (charPluginPrompts.length > 0) {
+        parts.push(charPluginPrompts.join('\n\n'))
+      }
+    }
+
+    // 注入禁词提示
+    const bannedPrompt = bannedWordFilter.buildPromptSection()
+    if (bannedPrompt) {
+      parts.push(bannedPrompt)
+    }
+
+    // 最后注入用户名字（最高优先级，确保AI使用正确的名字）
+    if (userName) {
+      parts.push(`\n【重要】用户的真名是"${userName}"，请用这个名字称呼用户，不要用其他人设中提到的名字。`)
     }
 
     return parts.join('\n')
@@ -316,12 +376,36 @@ export class ChatEngine {
       timestamp: Date.now()
     })
 
+    // TTS 合成由 ipc/chat.ts 在流结束后处理
+    // 这里只记录日志
+
     // 异步触发知识库生成（不阻塞回复）
     this.triggerKnowledgeGeneration(params.characterId, params.apiKey, params.baseUrl)
   }
 
   getEmotionState(characterId: string) {
     return this.getEmotionFSM(characterId).getState()
+  }
+
+  /**
+   * 获取 TTS 状态
+   */
+  getTTSState(): TTSState | null {
+    return this.ttsState
+  }
+
+  /**
+   * 获取 TTS 服务
+   */
+  getTTSService(): TTSService | null {
+    return this.ttsService
+  }
+
+  /**
+   * 设置当前播放歌曲信息（由音乐模块调用）
+   */
+  setCurrentSongInfo(songInfo: import('../music/MusicState').FullSongInfo | null): void {
+    this.currentSongInfo = songInfo
   }
 
   startFighting(characterId: string): void {
@@ -332,6 +416,34 @@ export class ChatEngine {
     for (const manager of this.memoryManagers.values()) {
       manager.save()
     }
+  }
+
+  /**
+   * 设置 TTS 服务和状态
+   */
+  setTTS(ttsService: TTSService, ttsState: TTSState): void {
+    this.ttsService = ttsService
+    this.ttsState = ttsState
+  }
+
+  /**
+   * 获取过滤后的纯文本（用于 TTS 和展示）
+   */
+  getFilteredText(text: string): string {
+    return filterForTTS(text)
+  }
+
+  /**
+   * 获取当前角色的默认风格指令
+   */
+  getDefaultStylePrompt(characterId: string): string {
+    const knowledge = this.getKnowledgeManager(characterId)
+    const persona = knowledge.readPersona()
+    if (!persona) return '用自然的语气说话'
+    if (persona.includes('温柔') || persona.includes('体贴')) return '用温柔的语气说话'
+    if (persona.includes('傲娇') || persona.includes('高冷')) return '用冷淡但偶尔傲娇的语气说话'
+    if (persona.includes('搞笑') || persona.includes('活泼')) return '用活泼开朗的语气说话'
+    return '用自然的语气说话'
   }
 
   /**

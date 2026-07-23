@@ -1,0 +1,750 @@
+/* src/renderer/components/plugins/PluginPage.css */
+/* 插件管理页面样式 */
+
+/* ─── 整体布局 ─── */
+.plugin-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.plugin-panel {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  width: 520px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── 头部 ─── */
+.plugin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.plugin-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.plugin-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.plugin-close:hover {
+  background: #F0F0F0;
+}
+
+/* ─── 内容区 ─── */
+.plugin-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ─── 安装区域 ─── */
+.plugin-install-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.plugin-install-zone:hover {
+  border-color: var(--primary-color);
+  background: rgba(7, 193, 96, 0.03);
+}
+
+.plugin-install-zone--dragging {
+  border-color: var(--primary-color);
+  background: rgba(7, 193, 96, 0.08);
+}
+
+.plugin-install-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.plugin-install-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.plugin-install-text span {
+  color: var(--primary-color);
+  cursor: pointer;
+}
+
+.plugin-install-text span:hover {
+  text-decoration: underline;
+}
+
+/* ─── 分组标题 ─── */
+.plugin-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 12px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.plugin-group-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.plugin-group-count {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+/* ─── 插件卡片 ─── */
+.plugin-card {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.plugin-card:hover {
+  border-color: #ccc;
+}
+
+.plugin-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.plugin-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.plugin-card__name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  margin: 0;
+}
+
+.plugin-card__meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.plugin-card__desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 6px 0;
+}
+
+.plugin-card__permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.plugin-card__perm-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.plugin-card__perm-tag--high {
+  background: #FFF0F0;
+  color: #E34D59;
+}
+
+.plugin-card__perm-tag--medium {
+  background: #FFF8E6;
+  color: #D4920B;
+}
+
+.plugin-card__perm-tag--low {
+  background: #F0FFF4;
+  color: #07C160;
+}
+
+.plugin-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ─── 开关 ─── */
+.plugin-toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: #ddd;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.plugin-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.plugin-toggle--on {
+  background: var(--primary-color);
+}
+
+.plugin-toggle--on::after {
+  transform: translateX(18px);
+}
+
+/* ─── 按钮 ─── */
+.plugin-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: all 0.15s;
+}
+
+.plugin-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.plugin-btn--danger {
+  color: #E34D59;
+  border-color: #E34D59;
+}
+
+.plugin-btn--danger:hover {
+  background: #E34D59;
+  color: #fff;
+}
+
+.plugin-btn--primary {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.plugin-btn--primary:hover {
+  opacity: 0.9;
+}
+
+/* ─── 空状态 ─── */
+.plugin-empty {
+  text-align: center;
+  padding: 32px 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* ─── 消息提示 ─── */
+.plugin-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: var(--font-size-sm);
+  z-index: 2000;
+  animation: pluginToastIn 0.3s ease;
+}
+
+.plugin-toast--error {
+  background: #E34D59;
+}
+
+.plugin-toast--success {
+  background: var(--primary-color);
+}
+
+@keyframes pluginToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ─── 安装确认弹窗 ─── */
+.plugin-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.plugin-confirm {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  width: 420px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.plugin-confirm h3 {
+  margin: 0 0 16px;
+  font-size: var(--font-size-lg);
+}
+
+.plugin-confirm__card {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.plugin-confirm__card-name {
+  font-weight: 600;
+  font-size: var(--font-size-base);
+}
+
+.plugin-confirm__card-meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.plugin-confirm__card-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.plugin-confirm__section {
+  margin-bottom: 16px;
+}
+
+.plugin-confirm__section h4 {
+  font-size: var(--font-size-sm);
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+}
+
+.plugin-confirm__perm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.plugin-confirm__perm-row:last-child {
+  border-bottom: none;
+}
+
+.plugin-confirm__perm-info {
+  flex: 1;
+}
+
+.plugin-confirm__perm-label {
+  font-size: var(--font-size-sm);
+}
+
+.plugin-confirm__perm-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ─── 确认弹窗开关 ─── */
+.plugin-confirm-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: #ddd;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.plugin-confirm-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.plugin-confirm-toggle--on {
+  background: var(--primary-color);
+}
+
+.plugin-confirm-toggle--on::after {
+  transform: translateX(16px);
+}
+
+.plugin-confirm__risk {
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 6px;
+}
+
+.plugin-confirm__risk--high {
+  background: #FFF0F0;
+  color: #E34D59;
+}
+
+.plugin-confirm__risk--medium {
+  background: #FFF8E6;
+  color: #D4920B;
+}
+
+.plugin-confirm__risk--low {
+  background: #F0FFF4;
+  color: #07C160;
+}
+
+.plugin-confirm__warn {
+  background: #FFF8E6;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: var(--font-size-xs);
+  color: #8B6914;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.plugin-confirm__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.plugin-confirm__checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color);
+}
+
+.plugin-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ─── 角色选择 ─── */
+.plugin-scope-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plugin-scope-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+.plugin-scope-option:hover {
+  border-color: var(--primary-color);
+}
+
+.plugin-scope-option--active {
+  border-color: var(--primary-color);
+  background: rgba(7, 193, 96, 0.05);
+}
+
+.plugin-scope-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.plugin-scope-option--active .plugin-scope-radio {
+  border-color: var(--primary-color);
+}
+
+.plugin-scope-option--active .plugin-scope-radio::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-color);
+}
+
+/* ─── 配置面板 ─── */
+.plugin-config-panel {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.plugin-config-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.plugin-config-header h3 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  margin: 0;
+}
+
+.plugin-config-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.plugin-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plugin-config-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.plugin-config-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.plugin-config-input:focus {
+  border-color: var(--primary-color);
+  background: var(--bg-primary);
+}
+
+.plugin-config-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.plugin-config-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plugin-config-toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: #ddd;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.plugin-config-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.plugin-config-toggle--on {
+  background: var(--primary-color);
+}
+
+.plugin-config-toggle--on::after {
+  transform: translateX(18px);
+}
+
+.plugin-config-toggle-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.plugin-config-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.plugin-config-select:focus {
+  border-color: var(--primary-color);
+}
+
+.plugin-config-color-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.plugin-config-color {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.plugin-config-color-value {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.plugin-config-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.plugin-config-textarea:focus {
+  border-color: var(--primary-color);
+  background: var(--bg-primary);
+}
+
+.plugin-config-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.plugin-config-saved {
+  font-size: var(--font-size-xs);
+  color: var(--primary-color);
+  margin-right: auto;
+}
+
+.plugin-config-btn-save {
+  padding: 6px 20px;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.plugin-config-btn-save:hover {
+  opacity: 0.9;
+}
+
+.plugin-config-btn-reset {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.plugin-config-btn-reset:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}

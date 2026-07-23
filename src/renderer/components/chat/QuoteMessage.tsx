@@ -1,7 +1,6 @@
-// src/renderer/components/chat/QuoteMessage.tsx
+﻿// src/renderer/components/chat/QuoteMessage.tsx
 // 引用消息展示 — 微信风格
 
-import React from 'react'
 import './QuoteMessage.css'
 
 interface QuoteMessageProps {

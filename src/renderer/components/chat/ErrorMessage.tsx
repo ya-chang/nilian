@@ -1,7 +1,6 @@
-// src/renderer/components/chat/ErrorMessage.tsx
+﻿// src/renderer/components/chat/ErrorMessage.tsx
 // 错误提示组件 — 友好的错误提示
 
-import React from 'react'
 import './ErrorMessage.css'
 
 interface ErrorMessageProps {

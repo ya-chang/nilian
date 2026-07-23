@@ -46,12 +46,19 @@
 .input-area__toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
   padding: 8px 16px;
   border-bottom: 1px solid var(--border-color);
 }
 
 .input-area__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-area__toolbar-right {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -77,6 +84,14 @@
 
 .input-area__tool-btn:hover {
   background: #F0F0F0;
+}
+
+.input-area__tool-btn--active {
+  background: rgba(7, 193, 96, 0.1);
+}
+
+.input-area__tool-btn--active:hover {
+  background: rgba(7, 193, 96, 0.2);
 }
 
 /* 输入编辑区 */
@@ -136,4 +151,27 @@
 
 .input-area__send-btn--active:hover {
   background: var(--primary-hover);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .input-area__footer {
+    padding: 6px 12px;
+  }
+
+  .input-area__footer-hint {
+    display: none;
+  }
+
+  .input-area__send-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 20px;
+  }
+
+  .input-area__tool-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
 }

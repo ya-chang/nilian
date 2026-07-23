@@ -3,7 +3,7 @@
 
 .side-nav {
   width: 54px;
-  height: 100vh;
+  height: 100%;
   background: var(--bg-nav);
   display: flex;
   flex-direction: column;
@@ -11,6 +11,8 @@
   padding-top: 16px;
   -webkit-app-region: drag;
   flex-shrink: 0;
+  position: relative;
+  z-index: 100;
 }
 
 /* 头像区域 */

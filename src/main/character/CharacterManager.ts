@@ -24,6 +24,13 @@ export interface CharacterConfig {
   baseUrl?: string
   temperature: number
   maxTokens: number
+  proactiveEnabled: boolean
+  ttsEnabled: boolean
+  ttsVoice: string
+  ttsVoiceName: string
+  ttsModel?: 'preset' | 'voicedesign' | 'voiceclone'
+  ttsVoiceDesignPrompt?: string
+  ttsCloneAudioName?: string
   createdAt: string
   updatedAt: string
 }
@@ -91,7 +98,7 @@ export class CharacterManager {
     templateId: string,
     name: string,
     avatar: string,
-    overrides?: Partial<Pick<CharacterConfig, 'provider' | 'model' | 'temperature' | 'maxTokens' | 'apiKey' | 'baseUrl' | 'persona' | 'traits' | 'catchphrase'>>
+    overrides?: Partial<Pick<CharacterConfig, 'provider' | 'model' | 'temperature' | 'maxTokens' | 'apiKey' | 'baseUrl' | 'persona' | 'traits' | 'catchphrase' | 'proactiveEnabled' | 'ttsEnabled' | 'ttsVoice' | 'ttsVoiceName' | 'ttsModel'>>
   ): CharacterConfig {
     const template = TEMPLATES.find((t) => t.id === templateId)
     if (!template) {
@@ -114,6 +121,11 @@ export class CharacterManager {
       baseUrl: overrides?.baseUrl,
       temperature: overrides?.temperature ?? 0.85,
       maxTokens: overrides?.maxTokens ?? 1024,
+      proactiveEnabled: overrides?.proactiveEnabled ?? true,
+      ttsEnabled: overrides?.ttsEnabled ?? false,
+      ttsVoice: overrides?.ttsVoice ?? '茉莉',
+      ttsVoiceName: overrides?.ttsVoiceName ?? '茉莉',
+      ttsModel: overrides?.ttsModel ?? 'preset',
       createdAt: now,
       updatedAt: now
     }
@@ -133,6 +145,11 @@ export class CharacterManager {
     model?: string
     apiKey?: string
     baseUrl?: string
+    proactiveEnabled?: boolean
+    ttsEnabled?: boolean
+    ttsVoice?: string
+    ttsVoiceName?: string
+    ttsModel?: 'preset' | 'voicedesign' | 'voiceclone'
   }): CharacterConfig {
     const id = `char_${Date.now()}`
     const now = new Date().toISOString()
@@ -150,6 +167,11 @@ export class CharacterManager {
       baseUrl: params.baseUrl,
       temperature: 0.85,
       maxTokens: 1024,
+      proactiveEnabled: params.proactiveEnabled ?? true,
+      ttsEnabled: params.ttsEnabled ?? false,
+      ttsVoice: params.ttsVoice ?? '茉莉',
+      ttsVoiceName: params.ttsVoiceName ?? '茉莉',
+      ttsModel: params.ttsModel ?? 'preset',
       createdAt: now,
       updatedAt: now
     }

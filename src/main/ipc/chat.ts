@@ -7,6 +7,7 @@ import { ChatEngine } from '../engine/ChatEngine'
 import { ResponseSplitter } from '../engine/ResponseSplitter'
 import { IntentClassifier } from '../engine/IntentClassifier'
 import { Humanizer } from '../engine/Humanizer'
+import { PatHandler } from '../engine/PatHandler'
 import { logger } from '../utils/logger'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs'
 import { join } from 'path'
@@ -60,9 +61,15 @@ const loadMessagesFromFile = (characterId: string): unknown[] => {
 }
 
 const engine = new ChatEngine()
+
+// 导出引擎实例供其他模块使用
+export function getChatEngine(): ChatEngine {
+  return engine
+}
 const splitter = new ResponseSplitter()
 const intentClassifier = new IntentClassifier()
 const humanizer = new Humanizer()
+const patHandler = new PatHandler()
 
 export const registerChatIPC = (): void => {
   // 加载消息
@@ -102,12 +109,38 @@ export const registerChatIPC = (): void => {
   ipcMain.handle(
     IPC_CHANNELS.CHAT_SEND,
     async (event, params: IpcMessage) => {
-      const msgId = `msg_${Date.now()}`
+      const msgId = `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
       const senderWindow = BrowserWindow.fromWebContents(event.sender)
 
       logger.info(`收到消息: id=${msgId}`)
 
       try {
+        // 拍一拍 → 根据人设生成回应
+        const patMatch = params.content.match(/^拍了拍.*?(?:的(.+))?$/)
+        if (patMatch) {
+          const suffix = patMatch[1] || ''
+          // 从角色配置读取人设类型
+          let personality = 'gentle'
+          try {
+            const characterManager = new (await import('../character/CharacterManager')).CharacterManager()
+            const character = characterManager.get(params.characterId)
+            if (character) {
+              // 根据 persona 关键词判断人设
+              const p = character.persona || ''
+              if (p.includes('高冷') || p.includes('傲娇')) personality = 'tsundere'
+              else if (p.includes('搞笑') || p.includes('活泼') || p.includes('段子')) personality = 'funny'
+              else if (p.includes('冷') || p.includes('酷')) personality = 'cold'
+            }
+          } catch (err) { logger.debug('角色人设读取失败，使用默认', err) }
+
+          const response = patHandler.getResponse(personality, suffix)
+          await deliverChunks(senderWindow, msgId, params.characterId, splitter.split(response))
+          return {
+            success: true,
+            data: { id: msgId, content: response, chunks: [response] }
+          }
+        }
+
         // 意图预判
         const intent = intentClassifier.classify(params.content)
 
@@ -131,16 +164,73 @@ export const registerChatIPC = (): void => {
         // 人味儿处理
         const humanized = humanizer.process(fullContent)
 
-        // 人味儿修改了内容时推送更新
-        if (humanized.content !== fullContent) {
-          senderWindow?.webContents.send(IPC_CHANNELS.CHAT_CHUNK, {
-            chunkId: msgId,
-            content: humanized.content,
-            index: 0,
-            total: 1,
-            isLast: true,
-            replace: true
-          })
+        // 人味儿处理完成后，发送最终状态标记
+        senderWindow?.webContents.send(IPC_CHANNELS.CHAT_CHUNK, {
+          chunkId: msgId,
+          content: humanized.content !== fullContent ? humanized.content : '',
+          index: 0,
+          total: 1,
+          isLast: true,
+          replace: humanized.content !== fullContent
+        })
+
+        // TTS 语音合成（异步，不阻塞回复）— 按角色设置
+        try {
+          const ttsService = engine.getTTSService()
+          if (ttsService?.isReady() && humanized.content.trim()) {
+            // 从角色配置读取 TTS 设置
+            const { CharacterManager } = await import('../character/CharacterManager')
+            const cm = new CharacterManager()
+            const charConfig = cm.get(params.characterId)
+            logger.info(`[TTS] 角色配置: id=${params.characterId}, ttsEnabled=${charConfig?.ttsEnabled}, ttsVoice=${charConfig?.ttsVoice}, ttsModel=${charConfig?.ttsModel}`)
+
+            if (charConfig?.ttsEnabled) {
+              const voiceId = charConfig.ttsVoice || '茉莉'
+              const ttsModel = charConfig.ttsModel || 'preset'
+              const { filterForTTS } = await import('../tts/TextFilter')
+              const filteredText = filterForTTS(humanized.content)
+
+              // 根据模型类型选择 stylePrompt
+              let stylePrompt: string
+              if (ttsModel === 'voicedesign' && charConfig.ttsVoiceDesignPrompt) {
+                // 音色设计模式：使用用户输入的音色描述
+                stylePrompt = charConfig.ttsVoiceDesignPrompt
+              } else {
+                // 预设模式：使用默认风格
+                stylePrompt = engine.getDefaultStylePrompt(params.characterId)
+              }
+
+              logger.info(`[TTS] 开始合成: voice=${voiceId}, model=${ttsModel}, style=${stylePrompt.slice(0, 30)}..., text=${filteredText.slice(0, 30)}...`)
+
+              ttsService.synthesize(filteredText, voiceId, stylePrompt, ttsModel)
+                .then(audioBuffer => {
+                  if (audioBuffer) {
+                    logger.info(`[TTS] 语音合成完成: ${audioBuffer.length} bytes`)
+                    try {
+                      const audioBase64 = audioBuffer.toString('base64')
+                      logger.info(`[TTS] 准备发送, msgId=${msgId}, audioLen=${audioBase64.length}`)
+                      const windows = BrowserWindow.getAllWindows()
+                      logger.info(`[TTS] 窗口数: ${windows.length}`)
+                      for (const win of windows) {
+                        if (!win.isDestroyed()) {
+                          win.webContents.send('tts:audio-ready', {
+                            characterId: params.characterId,
+                            msgId: msgId,
+                            audio: audioBase64
+                          })
+                          logger.info(`[TTS] 已发送到窗口`)
+                        }
+                      }
+                    } catch (err) {
+                      logger.error(`[TTS] 发送失败`, err)
+                    }
+                  }
+                })
+                .catch(err => logger.error('[TTS] 合成失败', err))
+            }
+          }
+        } catch (ttsErr) {
+          logger.error('[TTS] 处理异常', ttsErr)
         }
 
         logger.info(`流式输出完成`)
@@ -209,14 +299,14 @@ const streamToChunks = async (
       }
     }
 
-    // 推送剩余内容
+    // 推送剩余内容（不标记 isLast，由 humanizer 统一发最终标记）
     if (sentenceBuffer) {
       senderWindow?.webContents.send(IPC_CHANNELS.CHAT_CHUNK, {
         chunkId: msgId,
         content: sentenceBuffer,
         index: 0,
         total: 1,
-        isLast: true
+        isLast: false
       })
     }
   } finally {
@@ -230,7 +320,7 @@ const streamToChunks = async (
 }
 
 const findSplitPoint = (text: string): number => {
-  const splitChars = ['。', '！', '？', '!', '?', '，', ',', '、', '\n']
+  const splitChars = ['。', '！', '？', '!', '?', '，', ',', '、', '\n', '～', '…']
   for (const char of splitChars) {
     const idx = text.lastIndexOf(char)
     if (idx > 0 && idx < text.length - 1) {

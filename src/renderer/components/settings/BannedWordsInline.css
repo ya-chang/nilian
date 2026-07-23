@@ -1,0 +1,66 @@
+/* src/renderer/components/settings/BannedWordsInline.css */
+/* 禁词箱子内联样式 */
+
+.banned-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.banned-inline__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 32px;
+}
+
+.banned-inline__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.banned-inline__remove {
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+}
+
+.banned-inline__remove:hover {
+  color: #ff4d4f;
+}
+
+.banned-inline__empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.banned-inline__add {
+  display: flex;
+  gap: 8px;
+}
+
+.banned-inline__input {
+  flex: 1;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.banned-inline__input:focus {
+  border-color: var(--primary-color);
+}

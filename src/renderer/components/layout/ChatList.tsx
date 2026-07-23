@@ -1,7 +1,7 @@
-// src/renderer/components/layout/ChatList.tsx
+﻿// src/renderer/components/layout/ChatList.tsx
 // 中间聊天列表 — 搜索 + 对话列表 + 新建对象对话框
 
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { ChatItem } from '../chat/ChatItem'
 import { useChatSessionStore } from '../../stores/chatSessionStore'
 import { useChatStore } from '../../stores/chatStore'
@@ -9,13 +9,23 @@ import { useUnreadStore } from '../../stores/unreadStore'
 import { useChatListStore } from '../../stores/chatListStore'
 import './ChatList.css'
 
+interface MessageSearchResult {
+  id: string
+  content: string
+  role: string
+  timestamp: number
+}
+
 export function ChatList(): React.JSX.Element {
   const [searchText, setSearchText] = useState('')
   const [showCreate, setShowCreate] = useState(false)
+  const [searchResults, setSearchResults] = useState<MessageSearchResult[]>([])
+  const [showMessageSearch, setShowMessageSearch] = useState(false)
   const { currentSession, setCurrentSession } = useChatSessionStore()
   const setCurrentCharacter = useChatStore((s) => s.setCurrentCharacter)
   const setTotalUnread = useUnreadStore((s) => s.setTotalUnread)
   const { sessions, markRead, getTotalUnread } = useChatListStore()
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setTotalUnread(getTotalUnread())
@@ -68,15 +78,113 @@ export function ChatList(): React.JSX.Element {
     s.name.toLowerCase().includes(searchText.toLowerCase())
   )
 
+  // 搜索聊天消息
+  const handleMessageSearch = useCallback(async (query: string): Promise<void> => {
+    if (!query.trim()) {
+      setShowMessageSearch(false)
+      setSearchResults([])
+      return
+    }
+
+    // 如果有当前会话，搜索该会话的消息
+    if (currentSession?.id) {
+      // 确保消息已加载
+      const store = useChatStore.getState()
+      let messages = store.messagesByCharacter[currentSession.id]
+
+      if (!messages || messages.length === 0) {
+        await store.loadCharacterMessages(currentSession.id)
+        messages = useChatStore.getState().messagesByCharacter[currentSession.id] || []
+      }
+
+      const kw = query.toLowerCase()
+      const matched = messages.filter((m) =>
+        m.content.toLowerCase().includes(kw)
+      ).map((m) => ({
+        id: m.id,
+        content: m.content,
+        role: m.role,
+        timestamp: m.timestamp
+      }))
+      setSearchResults(matched)
+      setShowMessageSearch(true)
+    }
+  }, [currentSession?.id])
+
+  // 清除搜索结果
+  const clearMessageSearch = useCallback((): void => {
+    setSearchResults([])
+    setShowMessageSearch(false)
+    setSearchText('')
+  }, [])
+
+  // 跳转到消息（通过自定义事件通知 ChatWindow）
+  const handleJumpToMessage = useCallback((messageId: string): void => {
+    window.dispatchEvent(new CustomEvent('search:jumpTo', { detail: { messageId } }))
+  }, [])
+
   return (
     <div className="chat-list">
       <div className="chat-list__header">
         <div className="chat-list__search-wrapper">
           <span className="chat-list__search-icon">🔍</span>
-          <input type="text" className="chat-list__search-input" placeholder="搜索" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="chat-list__search-input"
+            placeholder={currentSession ? `搜索「${currentSession.name}」的消息...` : '搜索联系人'}
+            value={searchText}
+            onChange={(e) => {
+              const val = e.target.value
+              setSearchText(val)
+              if (val && currentSession) {
+                handleMessageSearch(val)
+              } else {
+                setShowMessageSearch(false)
+                setSearchResults([])
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                clearMessageSearch()
+              }
+            }}
+          />
+          {showMessageSearch && (
+            <button className="chat-list__search-clear" onClick={clearMessageSearch}>×</button>
+          )}
         </div>
         <button className="chat-list__add-btn" onClick={() => setShowCreate(true)} title="新建对象">+</button>
       </div>
+
+      {/* 搜索结果 */}
+      {showMessageSearch && (
+        <div className="chat-list__search-results">
+          {searchResults.length > 0 ? (
+            <>
+              <div className="chat-list__search-count">找到 {searchResults.length} 条结果</div>
+              {searchResults.slice(0, 20).map((r) => (
+                <div
+                  key={r.id}
+                  className="chat-list__search-item"
+                  onClick={() => { handleJumpToMessage(r.id); clearMessageSearch() }}
+                >
+                  <div className="chat-list__search-item-content">
+                    {r.content.length > 30 ? r.content.slice(0, 30) + '...' : r.content}
+                  </div>
+                  <div className="chat-list__search-item-time">
+                    {new Date(r.timestamp).toLocaleString('zh-CN', {
+                      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="chat-list__search-empty">没有找到相关消息</div>
+          )}
+        </div>
+      )}
 
       <div className="chat-list__items">
         {filteredSessions.map((session) => (
@@ -110,19 +218,14 @@ export function ChatList(): React.JSX.Element {
 
 // DeepSeek 官方: https://api-docs.deepseek.com
 // MiMo 官方: https://mimo.mi.com/docs/zh-CN/quick-start/summary/model
-const MODEL_OPTIONS: Record<string, string[]> = {
-  deepseek: ['deepseek-v4-flash', 'deepseek-v4-pro', 'deepseek-chat', 'deepseek-reasoner'],
-  mimo: ['mimo-v2.5-pro', 'mimo-v2.5'],
-  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1-preview', 'o1-mini'],
-  ollama: ['qwen2.5', 'llama3', 'mistral', 'codellama']
-}
+import { PROVIDERS } from '@shared/constants'
 
-// BASE URL — 按量付费用 /v1，Token Plan 用 /v1（不同域名）
-const BASE_URL_MAP: Record<string, string> = {
-  deepseek: 'https://api.deepseek.com',
-  mimo: 'https://api.xiaomimimo.com/v1',
-  openai: 'https://api.openai.com/v1',
-  ollama: 'http://localhost:11434/v1'
+const MODEL_OPTIONS: Record<string, string[]> = {}
+const BASE_URL_MAP: Record<string, string> = {}
+
+for (const [key, config] of Object.entries(PROVIDERS)) {
+  MODEL_OPTIONS[key] = config.models
+  BASE_URL_MAP[key] = config.baseUrl
 }
 
 const TEMPLATE_LABELS: Record<string, string> = {
@@ -399,7 +502,9 @@ function CreateCharacterOverlay({ onClose, onCreated }: {
             <label className="create-label">模型服务</label>
             <select className="create-select" value={provider} onChange={(e) => handleProviderChange(e.target.value)}>
               <option value="deepseek">DeepSeek（推荐）</option>
+              <option value="siliconflow">硅基流动 SiliconFlow</option>
               <option value="mimo">MiMo（小米）</option>
+              <option value="zhipu">智谱AI（GLM）</option>
               <option value="openai">OpenAI</option>
               <option value="ollama">Ollama（本地部署）</option>
             </select>

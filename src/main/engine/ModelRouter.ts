@@ -47,8 +47,10 @@ export class ModelRouter {
     const body = {
       model: request.model,
       messages: request.messages,
-      temperature: request.temperature ?? 0.85,
+      temperature: request.temperature ?? 0.7,
       max_tokens: request.maxTokens ?? 1024,
+      frequency_penalty: 1.2,
+      presence_penalty: 1.0,
       stream: true
     }
 
@@ -128,8 +130,10 @@ export class ModelRouter {
     const body = {
       model: request.model,
       messages: request.messages,
-      temperature: request.temperature ?? 0.85,
+      temperature: request.temperature ?? 0.7,
       max_tokens: request.maxTokens ?? 1024,
+      frequency_penalty: 1.2,
+      presence_penalty: 1.0,
       stream: false
     }
 

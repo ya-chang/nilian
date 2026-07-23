@@ -1,10 +1,11 @@
 // src/renderer/components/layout/ChatWindow.tsx
 // 右侧聊天窗口 — 自动滚到底部 + 引用 + 背景 + 正在输入
 
-import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { MessageBubble } from '../chat/MessageBubble'
 import { InputArea } from '../chat/InputArea'
 import { TitleBar } from './TitleBar'
+import { SearchBar } from '../search/SearchBar'
 import { useChatStore } from '../../stores/chatStore'
 import { useChatSessionStore } from '../../stores/chatSessionStore'
 import { useChatBgStore } from '../../stores/chatBgStore'
@@ -16,7 +17,14 @@ interface QuoteTarget {
   content: string
 }
 
-export function ChatWindow(): React.JSX.Element {
+// 虚拟滚动：只渲染可见区域 ±BUFFER 条消息
+const BUFFER = 15
+
+interface ChatWindowProps {
+  onBack?: () => void
+}
+
+export function ChatWindow({ onBack }: ChatWindowProps): React.JSX.Element {
   const messages = useChatStore((s) => s.messages)
   const isLoading = useChatStore((s) => s.isLoading)
   const currentSession = useChatSessionStore((s) => s.currentSession)
@@ -26,6 +34,132 @@ export function ChatWindow(): React.JSX.Element {
   const [objectAvatar, setObjectAvatar] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [isAutoScroll, setIsAutoScroll] = useState(true)
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 })
+  const [showSearch, setShowSearch] = useState(false)
+  const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null)
+
+  // Ctrl+F 打开搜索
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault()
+        setShowSearch(true)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // 监听 TTS 音频 — 绑定到最后一条 AI 消息
+  useEffect(() => {
+    const handler = (...args: unknown[]) => {
+      const data = args[0] as { characterId: string; msgId: string; audio: string }
+      if (data?.audio && data.characterId) {
+        const state = useChatStore.getState()
+        // 找到该角色最后一条 AI 消息
+        const charMessages = state.messagesByCharacter[data.characterId] || []
+        for (let i = charMessages.length - 1; i >= 0; i--) {
+          if (charMessages[i].role === 'assistant' && !charMessages[i].metadata?.voiceAudio) {
+            useChatStore.getState().updateMessage(charMessages[i].id, {
+              metadata: { ...charMessages[i].metadata, voiceAudio: data.audio }
+            }, data.characterId)
+            return
+          }
+        }
+      }
+    }
+    window.electronAPI?.on('tts:audio-ready', handler)
+    return () => { window.electronAPI?.off('tts:audio-ready', handler) }
+  }, [])
+
+  // 跳转到消息
+  const handleJumpToMessage = useCallback((messageId: string): void => {
+    // 找到消息在列表中的索引
+    const msgIndex = messages.findIndex((m) => m.id === messageId)
+    if (msgIndex < 0) return
+
+    // 先调整可见范围，让目标消息可见
+    const targetStart = Math.max(0, msgIndex - 20)
+    const targetEnd = Math.min(messages.length, msgIndex + 20)
+    setVisibleRange({ start: targetStart, end: targetEnd })
+
+    // 等待DOM更新后滚动
+    setTimeout(() => {
+      setHighlightMessageId(messageId)
+      const msgElement = document.getElementById(`msg-${messageId}`)
+      if (msgElement) {
+        msgElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      // 3秒后取消高亮
+      setTimeout(() => setHighlightMessageId(null), 3000)
+    }, 100)
+  }, [messages])
+
+  // 监听搜索跳转事件
+  useEffect(() => {
+    const handleJump = (e: Event): void => {
+      const detail = (e as CustomEvent).detail
+      if (detail?.messageId) {
+        handleJumpToMessage(detail.messageId)
+      }
+    }
+    window.addEventListener('search:jumpTo', handleJump)
+    return () => window.removeEventListener('search:jumpTo', handleJump)
+  }, [handleJumpToMessage])
+
+  // 虚拟滚动：计算可见范围
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleScroll = (): void => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      // 是否在底部附近（100px内）
+      const nearBottom = scrollHeight - scrollTop - clientHeight < 100
+      setIsAutoScroll(nearBottom)
+
+      // 计算可见范围（虚拟滚动优化）
+      const itemHeight = 60 // 估算每条消息高度
+      const start = Math.max(0, Math.floor(scrollTop / itemHeight) - BUFFER)
+      const end = Math.min(messages.length, Math.ceil((scrollTop + clientHeight) / itemHeight) + BUFFER)
+      setVisibleRange({ start, end })
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [messages.length])
+
+  // 消息变化时自动滚到底部
+  useEffect(() => {
+    if (isAutoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'instant' })
+    }
+  }, [messages, isLoading, isAutoScroll])
+
+  // 切换角色时立即滚到底部
+  useEffect(() => {
+    setIsAutoScroll(true)
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'instant' })
+    }
+  }, [currentSession?.id])
+
+  // 初始加载时滚到底部（消息从文件加载完成后）
+  useEffect(() => {
+    if (messages.length > 0) {
+      // 延迟一帧确保DOM渲染完成
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
+      })
+    }
+  }, [messages.length]) // 只在消息数量变化时触发
+
+  // 只渲染可见区域的消息（虚拟滚动）
+  const visibleMessages = useMemo(() => {
+    if (messages.length <= 50) return messages // 少量消息全部渲染
+    return messages.slice(visibleRange.start, visibleRange.end)
+  }, [messages, visibleRange])
 
   // 切换角色时，加载该角色的拍一拍后缀
   useEffect(() => {
@@ -42,7 +176,6 @@ export function ChatWindow(): React.JSX.Element {
     }
   }, [currentSession?.id])
 
-  // 保存拍一拍后缀（按角色）
   const setPatSuffix = useCallback((suffix: string): void => {
     const charId = useChatSessionStore.getState().currentSession?.id
     if (charId) {
@@ -51,7 +184,6 @@ export function ChatWindow(): React.JSX.Element {
     setPatSuffixState(suffix)
   }, [])
 
-  // 切换角色时加载该角色的头像
   useEffect(() => {
     const charId = currentSession?.id
     if (!charId) {
@@ -67,20 +199,6 @@ export function ChatWindow(): React.JSX.Element {
   }, [currentSession?.id])
 
   const chatBg = currentSession?.id ? chatBgStore.getBg(currentSession.id) : '#FFFFFF'
-
-  // 消息变化时自动滚到底部
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [messages, isLoading])
-
-  // 切换角色时立即滚到底部（不带动画）
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'instant' })
-    }
-  }, [currentSession?.id])
 
   const handleQuote = useCallback((messageId: string): void => {
     const msg = messages.find((m) => m.id === messageId)
@@ -115,7 +233,6 @@ export function ChatWindow(): React.JSX.Element {
     const charId = useChatSessionStore.getState().currentSession?.id
     if (charId) {
       localStorage.setItem(`char-avatar-${charId}`, dataUrl)
-      // 通知通讯录刷新头像
       useChatListStore.getState().bumpAvatarVersion(charId)
     }
   }, [])
@@ -124,10 +241,8 @@ export function ChatWindow(): React.JSX.Element {
     if (!currentSession?.id) return
 
     try {
-      // 1. 调后端删除
       await window.electronAPI?.invoke('character:delete', { id: currentSession.id })
 
-      // 2. 清 localStorage
       try {
         localStorage.removeItem(`char-data-${currentSession.id}`)
         localStorage.removeItem(`char-avatar-${currentSession.id}`)
@@ -135,15 +250,12 @@ export function ChatWindow(): React.JSX.Element {
         localStorage.removeItem(`chatBg-${currentSession.id}`)
       } catch { /* ignore */ }
 
-      // 3. 清聊天数据
       useChatStore.getState().clearCharacterMessages(currentSession.id)
 
-      // 4. 从聊天列表移除
       useChatListStore.setState((state) => ({
         sessions: state.sessions.filter((s) => s.id !== currentSession.id)
       }))
 
-      // 5. 清空当前选中
       useChatSessionStore.getState().setCurrentSession(null)
     } catch (error) {
       console.error('删除角色失败:', error)
@@ -176,7 +288,15 @@ export function ChatWindow(): React.JSX.Element {
         onPatSuffixChange={handlePatSuffixChange}
         onAvatarChange={handleAvatarChange}
         onDelete={handleDelete}
+        onSearch={() => setShowSearch(true)}
         characterId={currentSession?.id}
+        onBack={onBack}
+      />
+
+      <SearchBar
+        visible={showSearch}
+        onClose={() => setShowSearch(false)}
+        onJumpTo={handleJumpToMessage}
       />
 
       <div className="chat-window__messages" ref={containerRef} style={bgStyle}>
@@ -194,7 +314,12 @@ export function ChatWindow(): React.JSX.Element {
           </div>
         ) : (
           <>
-            {messages.map((msg) => (
+            {/* 虚拟滚动顶部占位 */}
+            {messages.length > 50 && visibleRange.start > 0 && (
+              <div style={{ height: `${visibleRange.start * 60}px`, flexShrink: 0 }} />
+            )}
+
+            {visibleMessages.map((msg) => (
               <MessageBubble
                 key={msg.id}
                 id={msg.id}
@@ -210,8 +335,15 @@ export function ChatWindow(): React.JSX.Element {
                 metadata={msg.metadata}
                 onQuote={handleQuote}
                 onPat={handlePat}
+                highlight={msg.id === highlightMessageId}
               />
             ))}
+
+            {/* 虚拟滚动底部占位 */}
+            {messages.length > 50 && visibleRange.end < messages.length && (
+              <div style={{ height: `${(messages.length - visibleRange.end) * 60}px`, flexShrink: 0 }} />
+            )}
+
             <div ref={messagesEndRef} />
           </>
         )}

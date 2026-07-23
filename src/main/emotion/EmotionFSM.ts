@@ -3,6 +3,7 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
+import { PATHS } from '../utils/dataPath'
 import { logger } from '../utils/logger'
 
 export interface EmotionalState {
@@ -48,8 +49,6 @@ const DEFAULT_STATE: EmotionalState = {
   lastInteraction: new Date().toISOString(),
   conversationStreak: 0
 }
-
-const DATA_DIR = join(process.cwd(), 'data', 'emotions')
 
 export class EmotionFSM {
   private state: EmotionalState
@@ -172,10 +171,10 @@ export class EmotionFSM {
   }
 
   private save(): void {
-    if (!existsSync(DATA_DIR)) {
-      mkdirSync(DATA_DIR, { recursive: true })
+    if (!existsSync(PATHS.emotions)) {
+      mkdirSync(PATHS.emotions, { recursive: true })
     }
-    const filePath = join(DATA_DIR, `${this.characterId}.json`)
+    const filePath = join(PATHS.emotions, `${this.characterId}.json`)
     writeFileSync(filePath, JSON.stringify({
       state: this.state,
       emotionalMemory: this.emotionalMemory,
@@ -184,14 +183,15 @@ export class EmotionFSM {
   }
 
   private load(): void {
-    const filePath = join(DATA_DIR, `${this.characterId}.json`)
+    const filePath = join(PATHS.emotions, `${this.characterId}.json`)
     if (existsSync(filePath)) {
       try {
         const data = JSON.parse(readFileSync(filePath, 'utf-8'))
         this.state = { ...DEFAULT_STATE, ...data.state }
         this.emotionalMemory = data.emotionalMemory || []
         this.reconciliation = data.reconciliation || this.reconciliation
-      } catch {
+      } catch (err) {
+        logger.debug(`情感状态加载失败: ${this.characterId}`, err)
         this.state = { ...DEFAULT_STATE }
       }
     }

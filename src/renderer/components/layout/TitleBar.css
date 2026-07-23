@@ -19,10 +19,30 @@
   gap: 8px;
 }
 
+.titlebar__back-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.titlebar__back-btn:active {
+  background: var(--bg-secondary);
+}
+
 .titlebar__name {
   font-size: var(--font-size-lg);
   font-weight: 500;
   color: var(--text-primary);
+  margin-left: 4px;
 }
 
 .titlebar__online {
@@ -119,6 +139,30 @@
   background: #fff1f0;
 }
 
+/* 中间：当前播放歌曲 */
+.titlebar__center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  max-width: 300px;
+  overflow: hidden;
+}
+
+.titlebar__song-icon {
+  font-size: 14px;
+}
+
+.titlebar__song-info {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 右侧窗口按钮 */
 .titlebar__right {
   display: flex;
@@ -143,6 +187,10 @@
 
 .titlebar__btn:hover {
   background: #E8E8E8;
+}
+
+.titlebar__btn--tts-active {
+  color: var(--primary-color);
 }
 
 .titlebar__btn--close:hover {

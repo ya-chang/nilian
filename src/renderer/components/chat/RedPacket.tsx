@@ -1,7 +1,7 @@
-// src/renderer/components/chat/RedPacket.tsx
+﻿// src/renderer/components/chat/RedPacket.tsx
 // 红包消息 — 红色卡片 + 祝福语
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import './RedPacket.css'
 
 interface RedPacketProps {

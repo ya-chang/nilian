@@ -15,8 +15,8 @@ const DEFAULT_CONFIG: SplitConfig = {
   preserveEmoji: true
 }
 
-// 拆分符号
-const SPLIT_MARKERS = /[。！？!?…\n]+/
+// 拆分符号（包含中文全角和半角标点、逗号）
+const SPLIT_MARKERS = /[。！？!?…～，,\n]+/
 
 export class ResponseSplitter {
   private config: SplitConfig
@@ -55,7 +55,7 @@ export class ResponseSplitter {
   }
 
   private isSplitChar(char: string): boolean {
-    return '。！？!?\n…'.includes(char)
+    return '。！？!?\n…～，,'.includes(char)
   }
 
   private mergeShortChunks(chunks: string[]): string[] {

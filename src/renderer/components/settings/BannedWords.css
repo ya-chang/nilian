@@ -1,0 +1,158 @@
+/* src/renderer/components/settings/BannedWords.css */
+/* 禁词箱子样式 */
+
+.banned-words {
+  padding: 16px;
+}
+
+.banned-words__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.banned-words__back {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.banned-words__title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.banned-words__desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.banned-words__list {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.banned-words__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.banned-words__item:last-child {
+  border-bottom: none;
+}
+
+.banned-words__word {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.banned-words__action {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.banned-words__remove {
+  padding: 2px 8px;
+  border: 1px solid #ff4d4f;
+  background: none;
+  color: #ff4d4f;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.banned-words__remove:hover {
+  background: #fff1f0;
+}
+
+.banned-words__empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.banned-words__add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.banned-words__input {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.banned-words__input:focus {
+  border-color: var(--primary-color);
+}
+
+.banned-words__add-btn {
+  padding: 0 16px;
+  height: 36px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.banned-words__add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.banned-words__global {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.banned-words__global-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.banned-words__radio {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.banned-words__replace-input {
+  width: 120px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+}

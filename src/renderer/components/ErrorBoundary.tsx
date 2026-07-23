@@ -1,10 +1,11 @@
 // src/renderer/renderer/components/ErrorBoundary.tsx
 // React Error Boundary — 捕获渲染错误，防止白屏闪退
 
-import React, { Component, type ReactNode } from 'react'
+import { Component, type ReactNode } from 'react'
 
 interface Props {
   children: ReactNode
+  section?: string
 }
 
 interface State {
@@ -23,11 +24,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error('[ErrorBoundary] 渲染错误:', error.message, errorInfo.componentStack)
+    console.error(`[ErrorBoundary${this.props.section ? `:${this.props.section}` : ''}] 渲染错误:`, error.message, errorInfo.componentStack)
   }
 
   render(): ReactNode {
     if (this.state.hasError) {
+      const section = this.props.section || '应用'
       return (
         <div style={{
           padding: '20px',
@@ -35,26 +37,22 @@ export class ErrorBoundary extends Component<Props, State> {
           fontFamily: 'monospace',
           fontSize: '13px',
           background: '#fff',
-          height: '100vh',
+          height: '100%',
           overflow: 'auto'
         }}>
-          <h3 style={{ margin: '0 0 8px' }}>应用遇到了错误</h3>
+          <h3 style={{ margin: '0 0 8px' }}>{section}遇到了错误</h3>
           <pre style={{
             background: '#f5f5f5',
             padding: '12px',
             borderRadius: '4px',
             overflow: 'auto',
-            whiteSpace: 'pre-wrap'
+            whiteSpace: 'pre-wrap',
+            maxHeight: '200px'
           }}>
             {this.state.error?.message}
-            {'\n\n'}
-            {this.state.error?.stack}
           </pre>
           <button
-            onClick={() => {
-              this.setState({ hasError: false, error: null })
-              window.location.reload()
-            }}
+            onClick={() => this.setState({ hasError: false, error: null })}
             style={{
               marginTop: '12px',
               padding: '6px 16px',
@@ -64,7 +62,7 @@ export class ErrorBoundary extends Component<Props, State> {
               background: '#fff'
             }}
           >
-            重新加载
+            重试
           </button>
         </div>
       )

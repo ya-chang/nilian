@@ -33,6 +33,25 @@
   padding: 0 4px;
 }
 
+/* 跳转高亮 */
+.message-row--highlight {
+  animation: highlightFade 3s ease-out;
+  margin-top: -6px;
+  margin-bottom: -3px;
+  padding-top: 6px;
+  padding-bottom: 3px;
+}
+
+@keyframes highlightFade {
+  0% {
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+  }
+  100% {
+    background: transparent;
+  }
+}
+
 /* 用户消息：头像在右 */
 .message-row--self {
   flex-direction: row;

@@ -3,13 +3,21 @@
 
 .chat-list {
   width: 260px;
-  height: 100vh;
+  height: 100%;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   position: relative;
+}
+
+/* 移动端全屏 */
+@media (max-width: 768px) {
+  .chat-list {
+    width: 100%;
+    border-right: none;
+  }
 }
 
 /* 搜索栏 + 新建按钮 */
@@ -72,6 +80,69 @@
 
 .chat-list__add-btn:hover {
   background: var(--primary-hover);
+}
+
+/* 搜索结果 */
+.chat-list__search-results {
+  max-height: 300px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.chat-list__search-count {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.chat-list__search-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.chat-list__search-item:hover {
+  background: #E9E9E9;
+}
+
+.chat-list__search-item-content {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-list__search-item-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.chat-list__search-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.chat-list__search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+}
+
+.chat-list__search-clear:hover {
+  color: var(--text-primary);
 }
 
 /* 对话列表 */

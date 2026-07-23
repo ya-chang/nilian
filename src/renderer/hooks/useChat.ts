@@ -1,15 +1,25 @@
 // src/renderer/hooks/useChat.ts
-// 聊天 Hook — 支持碎片式交付 + 引用 + 实时更新列表
+// 聊天 Hook — 直接调用 AI API
 
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { useChatStore } from '../stores/chatStore'
 import { useChatListStore } from '../stores/chatListStore'
 import { useChatSessionStore } from '../stores/chatSessionStore'
 import { useUserStore } from '../stores/userStore'
-import { useMusicStore } from '../stores/musicStore'
+import { CharacterService } from '../services/CharacterService'
+import { AIService } from '../services/AIService'
 import type { Message } from '../stores/chatStore'
 
-// 默认角色配置 — DeepSeek 官方模型
+const deduplicateText = (text: string): string => {
+  if (!text || text.length < 4) return text
+  let result = text
+  result = result.replace(/(.{2,80}?)\s+\1/g, '$1')
+  result = result.replace(/(.{2,80}?)([。！？.!?\~～…，,、；;：:"""''「」『』【】《》〈〉（）()〔〕\[\]{}])\1\2/g, '$1$2')
+  result = result.replace(/(.{2,40}?)\1+/g, '$1')
+  if (result.length < text.length) return deduplicateText(result)
+  return result
+}
+
 const DEFAULT_CHAR = {
   id: 'default',
   provider: 'deepseek',
@@ -34,148 +44,68 @@ export const useChat = (): {
   const { updateLastMessage } = useChatListStore()
   const assistantIdRef = useRef<string | null>(null)
 
-  // 监听碎片事件
-  useEffect(() => {
-    if (!window.electronAPI) return
-
-    const handleChunk = (...args: unknown[]): void => {
-      const data = args[0] as {
-        chunkId: string
-        content: string
-        index: number
-        total: number
-        isLast: boolean
-      }
-      const id = assistantIdRef.current
-      if (!id) return
-
-      const current = useChatStore.getState().messages.find((m) => m.id === id)
-      const existingContent = current?.content ?? ''
-
-      updateMessage(id, {
-        content: existingContent + data.content,
-        status: data.isLast ? 'sent' : 'sending'
-      })
-
-      // 最后一个碎片时，更新聊天列表的 lastMessage
-      if (data.isLast) {
-        const state = useChatStore.getState()
-        const charId = state.currentCharacterId || 'default'
-        const newContent = existingContent + data.content
-        updateLastMessage(charId, newContent.length > 20 ? newContent.slice(0, 20) + '...' : newContent)
-      }
-    }
-
-    window.electronAPI.on('chat:chunk', handleChunk)
-
-    return () => {
-      window.electronAPI?.off('chat:chunk', handleChunk)
-    }
-  }, [updateMessage, updateLastMessage])
-
   const sendMessage = async (content: string, quoteMessageId?: string): Promise<void> => {
     if (!content.trim() || isLoading) return
 
-    const charId = useChatStore.getState().currentCharacterId || DEFAULT_CHAR.id
+    const charId = useChatSessionStore.getState().currentSession?.id || useChatStore.getState().currentCharacterId || DEFAULT_CHAR.id
 
-    // 从 localStorage 读取角色的 API 配置
-    let provider = DEFAULT_CHAR.provider
-    let model = DEFAULT_CHAR.model
-    let apiKey = ''
-    let baseUrl = ''
+    // 获取角色配置
+    const charConfig = CharacterService.get(charId)
+    const provider = charConfig?.provider || DEFAULT_CHAR.provider
+    const model = charConfig?.model || DEFAULT_CHAR.model
+    const apiKey = charConfig?.apiKey || ''
+    const baseUrl = charConfig?.baseUrl || ''
+    const persona = charConfig?.persona || ''
 
-    // 优先从当前会话获取角色 ID
-    const sessionId = useChatSessionStore.getState().currentSession?.id
-    const actualCharId = sessionId || charId
-
-    try {
-      const charData = localStorage.getItem(`char-data-${actualCharId}`)
-      if (charData) {
-        const parsed = JSON.parse(charData)
-        if (parsed.provider) provider = parsed.provider
-        if (parsed.model) model = parsed.model
-        if (parsed.apiKey) apiKey = parsed.apiKey
-        if (parsed.baseUrl) baseUrl = parsed.baseUrl
-      }
-    } catch { /* ignore */ }
-
-    // 更新聊天列表的 lastMessage 为用户消息
     updateLastMessage(charId, content.length > 20 ? content.slice(0, 20) + '...' : content)
 
-    // 构建引用元数据 — 直接从 messagesByCharacter 查找，确保切换角色后也能找到
+    // 构建引用
     const quoteMeta: Record<string, unknown> | undefined = quoteMessageId
       ? (() => {
           const state = useChatStore.getState()
-          const charId = state.currentCharacterId || 'default'
           const charMessages = state.messagesByCharacter[charId] || []
           const quotedMsg = charMessages.find((m) => m.id === quoteMessageId)
           return quotedMsg && quotedMsg.content
-            ? {
-                quotedMessageId: quotedMsg.id,
-                quotedContent: quotedMsg.content,
-                quotedRole: quotedMsg.role
-              }
+            ? { quotedMessageId: quotedMsg.id, quotedContent: quotedMsg.content, quotedRole: quotedMsg.role }
             : undefined
         })()
       : undefined
 
-    addMessage({
-      role: 'user',
-      content,
-      type: 'text',
-      metadata: quoteMeta
-    })
+    const rawHistory = useChatStore.getState().messages.slice(-20)
+    const history = rawHistory.map((m) => ({
+      role: m.role as 'system' | 'user' | 'assistant',
+      content: m.role === 'assistant' ? deduplicateText(m.content) : m.content
+    }))
 
-    const assistantId = addMessage({
-      role: 'assistant',
-      content: '',
-      type: 'text'
-    })
+    addMessage({ role: 'user', content, type: 'text', metadata: quoteMeta })
+
+    const assistantId = addMessage({ role: 'assistant', content: '', type: 'text' })
     assistantIdRef.current = assistantId
-
     setLoading(true)
 
     try {
-      const history = useChatStore.getState().messages.slice(-20).map((m) => ({
-        role: m.role as 'system' | 'user' | 'assistant',
-        content: m.content
-      }))
-
-      // 读取角色的人设
-      let persona = ''
-      try {
-        const charData = localStorage.getItem(`char-data-${charId}`)
-        if (charData) {
-          const parsed = JSON.parse(charData)
-          if (parsed.persona) persona = parsed.persona
-        }
-      } catch { /* ignore */ }
-
-      const result = await window.electronAPI?.invoke('chat:send', {
-        content,
-        characterId: charId,
+      const response = await AIService.chat({
         provider,
         model,
         apiKey,
         baseUrl,
-        history,
+        messages: history,
         persona,
-        quoteContent: quoteMeta?.quotedContent as string | undefined,
         userName: useUserStore.getState().name || undefined,
-        currentSong: useMusicStore.getState().currentSong || undefined
+        quoteContent: quoteMeta?.quotedContent as string | undefined,
+        temperature: charConfig?.temperature,
+        maxTokens: charConfig?.maxTokens
       })
 
-      const response = result as {
-        success: boolean
-        data?: { content: string; model: string }
-        error?: string
-      }
-
-      if (!response?.success) {
+      if (response.success && response.data) {
+        const reply = deduplicateText(response.data.content)
+        updateMessage(assistantId, { content: reply, status: 'sent' })
+        updateLastMessage(charId, reply.length > 20 ? reply.slice(0, 20) + '...' : reply)
+      } else {
         updateMessage(assistantId, {
           content: '抱歉，消息发送失败，请重试',
           status: 'error',
-          error: response?.error
+          error: response.error
         })
         updateLastMessage(charId, '消息发送失败')
       }

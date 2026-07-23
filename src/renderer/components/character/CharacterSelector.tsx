@@ -1,9 +1,10 @@
 // src/renderer/components/character/CharacterSelector.tsx
 // 角色选择器 — +按钮弹出创建对话框
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useCharacterStore, type CharacterConfig } from '../../stores/characterStore'
 import { useChatListStore } from '../../stores/chatListStore'
+import { PROVIDERS } from '@shared/constants'
 import './CharacterSelector.css'
 
 interface CharacterSelectorProps {
@@ -20,10 +21,6 @@ export function CharacterSelector({ unreadCount = 0 }: CharacterSelectorProps): 
   } = useCharacterStore()
   const [showCreate, setShowCreate] = useState(false)
 
-  useEffect(() => {
-    loadCharacters()
-  }, [])
-
   const loadCharacters = async (): Promise<void> => {
     setLoading(true)
     try {
@@ -39,6 +36,10 @@ export function CharacterSelector({ unreadCount = 0 }: CharacterSelectorProps): 
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadCharacters()
+  }, [loadCharacters])
 
   const handleSwitch = async (id: string): Promise<void> => {
     await window.electronAPI?.invoke('character:switch', { characterId: id })
@@ -109,6 +110,7 @@ function CharacterCreateDialog({ onClose, onCreated }: CharacterCreateDialogProp
   const [model, setModel] = useState('deepseek-chat')
   const [apiKey, setApiKey] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
+  const [proactiveEnabled, setProactiveEnabled] = useState(true)
 
   const handleCreate = async (): Promise<void> => {
     if (!name.trim()) return
@@ -122,7 +124,8 @@ function CharacterCreateDialog({ onClose, onCreated }: CharacterCreateDialogProp
       provider,
       model,
       apiKey: apiKey || undefined,
-      baseUrl: baseUrl || undefined
+      baseUrl: baseUrl || undefined,
+      proactiveEnabled
     })
 
     if (result && typeof result === 'object' && 'id' in result) {
@@ -168,25 +171,73 @@ function CharacterCreateDialog({ onClose, onCreated }: CharacterCreateDialogProp
           <label>模型服务</label>
           <select value={provider} onChange={(e) => {
             setProvider(e.target.value)
-            const defaults: Record<string, { url: string; model: string }> = {
-              deepseek: { url: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
-              mimo: { url: 'https://api.xiaomi.com/mimo/v1', model: 'MiMo-7B-RL' },
-              openai: { url: 'https://api.openai.com/v1', model: 'gpt-4o' },
-              ollama: { url: 'http://localhost:11434/v1', model: 'qwen2.5' }
-            }
-            const d = defaults[e.target.value]
-            if (d) { setBaseUrl(d.url); setModel(d.model) }
+            const config = PROVIDERS[e.target.value]
+            if (config) { setBaseUrl(config.baseUrl); setModel(config.defaultModel) }
           }}>
-            <option value="deepseek">DeepSeek</option>
-            <option value="mimo">MiMo</option>
-            <option value="openai">OpenAI</option>
-            <option value="ollama">Ollama</option>
+            {Object.entries(PROVIDERS).map(([key, config]) => (
+              <option key={key} value={key}>{config.name}</option>
+            ))}
           </select>
         </div>
+
+        {provider === 'siliconflow' && (
+          <div className="character-create-field">
+            <label>模型</label>
+            <select value={model} onChange={(e) => setModel(e.target.value)}>
+              <optgroup label="DeepSeek">
+                <option value="deepseek-ai/DeepSeek-V4-Flash">DeepSeek-V4-Flash（最新）</option>
+                <option value="deepseek-ai/DeepSeek-V3.2">DeepSeek-V3.2（推荐）</option>
+                <option value="Pro/deepseek-ai/DeepSeek-V3.2">DeepSeek-V3.2 Pro（更快）</option>
+                <option value="deepseek-ai/DeepSeek-R1">DeepSeek-R1（推理模型）</option>
+                <option value="Pro/deepseek-ai/DeepSeek-R1">DeepSeek-R1 Pro</option>
+              </optgroup>
+              <optgroup label="Qwen 通义千问">
+                <option value="Qwen/Qwen3-8B">Qwen3-8B</option>
+                <option value="Qwen/Qwen3-14B">Qwen3-14B</option>
+                <option value="Qwen/Qwen3-32B">Qwen3-32B</option>
+                <option value="Qwen/Qwen3-30B-A3B">Qwen3-30B-A3B（MoE）</option>
+                <option value="Qwen/Qwen3.5-9B">Qwen3.5-9B</option>
+                <option value="Qwen/Qwen3.5-27B">Qwen3.5-27B</option>
+                <option value="Qwen/Qwen3.5-122B-A10B">Qwen3.5-122B（MoE）</option>
+                <option value="Qwen/Qwen3.5-397B-A17B">Qwen3.5-397B（最强）</option>
+                <option value="Qwen/Qwen2.5-7B-Instruct">Qwen2.5-7B（轻量）</option>
+                <option value="Qwen/Qwen2.5-72B-Instruct">Qwen2.5-72B</option>
+              </optgroup>
+              <optgroup label="GLM 智谱">
+                <option value="THUDM/glm-4-9b-chat">GLM-4-9B</option>
+              </optgroup>
+              <optgroup label="Yi 零一万物">
+                <option value="01-ai/Yi-1.5-9B-Chat-16K">Yi-1.5-9B</option>
+              </optgroup>
+              <optgroup label="Llama">
+                <option value="meta-llama/Meta-Llama-3.1-8B-Instruct">Llama-3.1-8B</option>
+                <option value="meta-llama/Meta-Llama-3.1-70B-Instruct">Llama-3.1-70B</option>
+              </optgroup>
+            </select>
+          </div>
+        )}
 
         <div className="character-create-field">
           <label>API Key</label>
           <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-..." />
+        </div>
+
+        <div className="character-create-field">
+          <label>主动消息</label>
+          <div className="character-create-toggle-row">
+            <button
+              className={`character-create-toggle ${proactiveEnabled ? 'character-create-toggle--on' : ''}`}
+              onClick={() => setProactiveEnabled(!proactiveEnabled)}
+            />
+            <span className="character-create-toggle-label">
+              {proactiveEnabled ? '开启' : '关闭'}
+            </span>
+          </div>
+          <div className="character-create-hint">
+            {proactiveEnabled
+              ? '开启后AI会主动发早安、晚安、想你等消息（会消耗额外token）'
+              : '关闭后AI不会主动发消息，只在你发消息时回复'}
+          </div>
         </div>
 
         <div className="character-create-actions">

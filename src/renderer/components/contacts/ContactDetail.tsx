@@ -1,12 +1,16 @@
 // src/renderer/components/contacts/ContactDetail.tsx
 // 联系人详情 — 显示在中间区域，支持修改头像
 
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useContactStore } from '../../stores/contactStore'
 import { useChatListStore } from '../../stores/chatListStore'
 import './ContactList.css'
 
-export function ContactDetail(): React.JSX.Element {
+interface ContactDetailProps {
+  onBack?: () => void
+}
+
+export function ContactDetail({ onBack }: ContactDetailProps): React.JSX.Element | null {
   const selectedContactId = useContactStore((s) => s.selectedContactId)
   const setSelectedContactId = useContactStore((s) => s.setSelectedContactId)
   const sessions = useChatListStore((s) => s.sessions)
@@ -18,14 +22,18 @@ export function ContactDetail(): React.JSX.Element {
   const session = sessions.find((s) => s.id === selectedContactId)
 
   const [charData, setCharData] = useState<Record<string, unknown> | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!selectedContactId) return
+    if (!selectedContactId) { setLoading(false); return }
+    setLoading(true)
     try {
       const raw = localStorage.getItem(`char-data-${selectedContactId}`)
       setCharData(raw ? JSON.parse(raw) : null)
     } catch {
       setCharData(null)
+    } finally {
+      setLoading(false)
     }
   }, [selectedContactId])
 
@@ -74,6 +82,16 @@ export function ContactDetail(): React.JSX.Element {
 
   if (!session || !selectedContactId) return null
 
+  if (loading) {
+    return (
+      <div className="contact-detail">
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
+          加载中...
+        </div>
+      </div>
+    )
+  }
+
   const isImage = customAvatar && customAvatar.startsWith('data:image')
   const displayAvatar = isImage ? customAvatar : session.avatar
 
@@ -85,6 +103,7 @@ export function ContactDetail(): React.JSX.Element {
 
   const providerLabels: Record<string, string> = {
     deepseek: 'DeepSeek',
+    siliconflow: '硅基流动',
     mimo: 'MiMo（小米）',
     openai: 'OpenAI',
     ollama: 'Ollama（本地）'
@@ -113,24 +132,10 @@ export function ContactDetail(): React.JSX.Element {
       />
 
       <div className="contact-detail__titlebar">
-        <button className="contact-detail__back" onClick={() => setSelectedContactId(null)}>
-          ← 返回通讯录
+        <button className="contact-detail__back" onClick={() => onBack ? onBack() : setSelectedContactId(null)}>
+          ←
         </button>
         <span className="contact-detail__title">对象详情</span>
-        <div className="contact-detail__window-controls">
-          <button className="contact-detail__win-btn" onClick={() => window.electronAPI?.minimize()} title="最小化">
-            <svg width="12" height="12" viewBox="0 0 12 12"><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1" /></svg>
-          </button>
-          <button className="contact-detail__win-btn" onClick={() => window.electronAPI?.maximize()} title="最大化">
-            <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1" /></svg>
-          </button>
-          <button className="contact-detail__win-btn contact-detail__win-btn--close" onClick={() => window.electronAPI?.close()} title="关闭">
-            <svg width="12" height="12" viewBox="0 0 12 12">
-              <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" strokeWidth="1" />
-              <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" strokeWidth="1" />
-            </svg>
-          </button>
-        </div>
       </div>
 
       <div className="contact-detail__body">

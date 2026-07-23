@@ -1,7 +1,6 @@
-// src/renderer/components/chat/LoadingSpinner.tsx
+﻿// src/renderer/components/chat/LoadingSpinner.tsx
 // 加载状态组件 — 各种场景的加载提示
 
-import React from 'react'
 import './LoadingSpinner.css'
 
 interface LoadingSpinnerProps {

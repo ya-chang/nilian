@@ -1,7 +1,6 @@
-// src/renderer/components/chat/EmojiPicker.tsx
+﻿// src/renderer/components/chat/EmojiPicker.tsx
 // 表情选择器 — 常用表情面板
 
-import React from 'react'
 import './EmojiPicker.css'
 
 interface EmojiPickerProps {

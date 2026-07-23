@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="resources/preview.png" alt="拟恋预览" width="600" />
+<img src="resources/preview.png" alt="Moli 预览" width="600" />
 
-# 💕 拟恋 (ni-lian)
+# 🌸 Moli（茉莉）
 
-### AI 虚拟伴侣桌面应用 —— 有记忆、有情绪、越聊越懂你
+### AI 虚拟伴侣桌面应用 —— 茉莉花开，模拟恋人的温度
 
 [![Electron](https://img.shields.io/badge/Electron-33-47848F?logo=electron&style=flat-square)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&style=flat-square)](https://react.dev/)
@@ -21,7 +21,7 @@
 
 ## 📖 项目简介
 
-**拟恋** 是一款基于 Electron 的 AI 虚拟伴侣桌面应用，模拟微信 PC 端 UI。所有数据本地存储，支持多角色切换，拥有完整的记忆系统、情感模型和学习能力。
+**Moli（茉莉）** 是一款基于 Electron 的 AI 虚拟伴侣桌面应用，模拟微信 PC 端 UI。名字取自「模拟恋人」的谐音，也是茉莉花的名字。所有数据本地存储，支持多角色切换，拥有完整的记忆系统、情感模型和学习能力。
 
 > 🎯 **核心定位**：有记忆、有情绪、越聊越懂你的 AI 恋人。不是简单的 chatbot，而是能记住你说过的话、会生气会和好、会主动关心你的虚拟伴侣。
 
@@ -202,6 +202,6 @@ ni-lian/
 
 <div align="center">
 
-**拟恋 —— 有记忆、有情绪、越聊越懂你**
+**Moli（茉莉）—— 茉莉花开，模拟恋人的温度**
 
 </div>

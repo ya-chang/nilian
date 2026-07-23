@@ -290,3 +290,48 @@
   color: var(--text-secondary);
   line-height: 1.6;
 }
+
+/* 音源设置 */
+.settings-source-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  outline: none;
+}
+
+.settings-source-input:focus {
+  border-color: var(--primary-color);
+}
+
+.settings-source-status {
+  font-size: var(--font-size-xs);
+  color: var(--primary-color);
+}
+
+.settings-source-presets {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.settings-source-preset-btn {
+  padding: 2px 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.settings-source-preset-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}

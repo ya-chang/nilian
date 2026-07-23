@@ -1,10 +1,11 @@
 // src/renderer/components/chat/MessageBubble.tsx
-// 消息气泡 — 支持文本/拍一拍/红包/引用等类型
+// 消息气泡 — 支持文本/拍一拍/红包/引用/语音等类型
 
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import { QuoteMessage } from './QuoteMessage'
 import { PatMessage } from './PatMessage'
 import { RedPacket } from './RedPacket'
+import { VoiceMessage } from '../tts/VoiceMessage'
 import { useUserStore } from '../../stores/userStore'
 import type { QuoteMeta, PatMeta, RedPacketMeta } from '@shared/types'
 import './MessageBubble.css'
@@ -20,6 +21,7 @@ interface MessageBubbleProps {
   metadata?: Record<string, unknown>
   onQuote?: (messageId: string) => void
   onPat?: (targetName: string, suffix: string) => void
+  highlight?: boolean
 }
 
 export function MessageBubble({
@@ -33,6 +35,7 @@ export function MessageBubble({
   metadata,
   onQuote,
   onPat,
+  highlight,
 }: MessageBubbleProps): React.JSX.Element {
   const userAvatar = useUserStore((s) => s.avatar)
   const setUserAvatar = useUserStore((s) => s.setAvatar)
@@ -55,6 +58,9 @@ export function MessageBubble({
   const isUser = role === 'user'
   const displayAvatar = isUser ? userAvatar : (avatar || '🤖')
 
+  // 检查是否有语音数据
+  const voiceAudio = metadata?.voiceAudio as string | undefined
+
   const handleAvatarClick = (): void => {
     if (isUser) {
       fileInputRef.current?.click()
@@ -76,7 +82,7 @@ export function MessageBubble({
   }
 
   return (
-    <div className={`message-row ${isUser ? 'message-row--self' : 'message-row--other'}`}>
+    <div id={`msg-${id}`} className={`message-row ${isUser ? 'message-row--self' : 'message-row--other'} ${highlight ? 'message-row--highlight' : ''}`}>
       <input
         ref={fileInputRef}
         type="file"
@@ -127,7 +133,13 @@ export function MessageBubble({
                 <span className="typing-dot" />
               </span>
             ) : (
-              <span className="message-text">{content}</span>
+              <>
+                {/* 语音条（在文字上方） */}
+                {voiceAudio && (
+                  <VoiceMessage audioBase64={voiceAudio} isSelf={isUser} />
+                )}
+                <span className="message-text">{content}</span>
+              </>
             )}
           </div>
         )}

@@ -1,0 +1,128 @@
+/* src/renderer/components/search/SearchBar.css */
+/* 搜索栏样式 */
+
+.search-bar {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 10;
+}
+
+.search-bar__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-bar__icon {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.search-bar__input {
+  flex: 1;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  outline: none;
+}
+
+.search-bar__input:focus {
+  border-color: var(--primary-color);
+}
+
+.search-bar__close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  font-size: 16px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.search-bar__close:hover {
+  background: #E8E8E8;
+}
+
+.search-bar__results {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-bar__count {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-bar__result {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.search-bar__result:hover {
+  background: var(--bg-secondary);
+}
+
+.search-bar__result-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.search-bar__result-content {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-highlight {
+  background: #fff3cd;
+  color: #856404;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.search-bar__jump-btn {
+  padding: 2px 8px;
+  border: 1px solid var(--primary-color);
+  background: none;
+  color: var(--primary-color);
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.search-bar__jump-btn:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.search-bar__empty {
+  padding: 30px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.search-bar__empty-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}

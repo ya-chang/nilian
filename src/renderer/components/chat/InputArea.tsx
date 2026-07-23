@@ -1,7 +1,7 @@
 // src/renderer/components/chat/InputArea.tsx
 // 聊天输入区域 — 表情选择 + 引用回复
 
-import React, { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useChat } from '../../hooks/useChat'
 import { EmojiPicker } from './EmojiPicker'
 import './InputArea.css'
@@ -13,18 +13,18 @@ interface InputAreaProps {
 }
 
 export function InputArea({ quoteMessage, onClearQuote, disabled }: InputAreaProps): React.JSX.Element {
-  const [message, setMessage] = useState('')
+  const [inputValue, setInputValue] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
-  const { sendMessage, isLoading } = useChat()
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const isDisabled = disabled || isLoading
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const { sendMessage } = useChat()
 
   const handleSend = (): void => {
-    if (message.trim() && !isLoading) {
-      sendMessage(message.trim(), quoteMessage?.id)
-      setMessage('')
-      onClearQuote?.()
-    }
+    const text = inputValue.trim()
+    if (!text) return
+    sendMessage(text)
+    setInputValue('')
+    setShowEmoji(false)
+    inputRef.current?.focus()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {
@@ -35,25 +35,21 @@ export function InputArea({ quoteMessage, onClearQuote, disabled }: InputAreaPro
   }
 
   const handleEmojiSelect = (emoji: string): void => {
-    setMessage((prev) => prev + emoji)
-    textareaRef.current?.focus()
+    setInputValue(prev => prev + emoji)
+    setShowEmoji(false)
+    inputRef.current?.focus()
   }
 
   return (
     <div className="input-area">
-      {/* 引用提示栏 */}
       {quoteMessage && (
-        <div className="input-area__quote-bar">
-          <span className="input-area__quote-text">
-            引用: {quoteMessage.content.length > 30
-              ? quoteMessage.content.slice(0, 30) + '...'
-              : quoteMessage.content}
-          </span>
+        <div className="input-area__quote">
+          <span className="input-area__quote-content">{quoteMessage.content}</span>
           <button className="input-area__quote-close" onClick={onClearQuote}>×</button>
         </div>
       )}
 
-      {/* 工具栏 */}
+      {/* 工具栏（输入框上方） */}
       <div className="input-area__toolbar">
         <div className="input-area__toolbar-left">
           <div className="input-area__emoji-wrapper">
@@ -84,30 +80,26 @@ export function InputArea({ quoteMessage, onClearQuote, disabled }: InputAreaPro
       </div>
 
       {/* 输入框 */}
-      <div className="input-area__editor">
-        <textarea
-          ref={textareaRef}
-          className="input-area__textarea"
-          placeholder="输入消息..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          rows={1}
-          disabled={isDisabled}
-        />
-      </div>
+      <textarea
+        ref={inputRef}
+        className="input-area__textarea"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={disabled ? '请先选择一个角色' : '输入消息...'}
+        disabled={disabled}
+        rows={1}
+      />
 
-      {/* 底部按钮 */}
+      {/* 底部：发送按钮 */}
       <div className="input-area__footer">
-        <div className="input-area__footer-hint">
-          按 Enter 发送，Shift + Enter 换行
-        </div>
+        <span className="input-area__footer-hint">Enter 发送，Shift+Enter 换行</span>
         <button
-          className={`input-area__send-btn ${message.trim() && !isLoading ? 'input-area__send-btn--active' : ''}`}
+          className={`input-area__send-btn ${inputValue.trim() ? 'input-area__send-btn--active' : ''}`}
           onClick={handleSend}
-          disabled={!message.trim() || isLoading}
+          disabled={!inputValue.trim() || disabled}
         >
-          {isLoading ? '发送中...' : '发送(S)'}
+          发送
         </button>
       </div>
     </div>

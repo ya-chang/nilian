@@ -1,9 +1,13 @@
 // src/renderer/components/settings/SettingsPanel.tsx
 // 设置面板 — 主题 + 字体大小 + 聊天背景 + 数据管理
 
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useChatSessionStore } from '../../stores/chatSessionStore'
 import { useChatBgStore } from '../../stores/chatBgStore'
+import { useUIStore } from '../../stores/uiStore'
+import { BannedWordsInline } from './BannedWordsInline'
+import { PluginPage } from '../plugins/PluginPage'
+import { APP_VERSION } from '@shared/constants'
 import './SettingsPanel.css'
 
 interface SettingsPanelProps {
@@ -26,7 +30,9 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
   const [chatBg, setChatBg] = useState('#FFFFFF')
   const [dataDir, setDataDir] = useState('F:\\mimo\\xm\\data\\app')
   const [exportStatus, setExportStatus] = useState('')
+
   const [importStatus, setImportStatus] = useState('')
+  const [showPlugins, setShowPlugins] = useState(false)
   const currentSession = useChatSessionStore((s) => s.currentSession)
   const chatBgStore = useChatBgStore()
   const bgInputRef = useRef<HTMLInputElement>(null)
@@ -39,6 +45,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
       setTheme(t)
       document.documentElement.setAttribute('data-theme', t)
       setFontSize(settings.fontSize || 14)
+
     }
     if (currentSession?.id) {
       const bg = chatBgStore.getBg(currentSession.id)
@@ -232,13 +239,38 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
             </div>
           </div>
 
+          {/* 禁词箱子 */}
+          <div className="settings-section">
+            <h4>禁词箱子</h4>
+            <p className="settings-hint">AI不会在回复中使用以下词语</p>
+            <BannedWordsInline />
+          </div>
+
+          {/* 数据备份 */}
+          <BackupSettings />
+
+          {/* 插件管理 */}
+          <div className="settings-section">
+            <h4>插件管理</h4>
+            <p className="settings-hint">安装和管理扩展插件</p>
+            <div className="settings-data-actions">
+              <div className="settings-data-item" onClick={() => setShowPlugins(true)} style={{ cursor: 'pointer' }}>
+                <div>
+                  <div className="settings-data-title">插件管理</div>
+                  <div className="settings-data-desc">查看、安装、卸载插件</div>
+                </div>
+                <button className="settings-btn">打开</button>
+              </div>
+            </div>
+          </div>
+
           {/* 关于 / 反馈 */}
           <div className="settings-section settings-about">
             <h4>关于拟恋</h4>
             <div className="settings-about__info">
               <div className="settings-about__item">
                 <span className="settings-about__label">版本</span>
-                <span className="settings-about__value">1.0.0</span>
+                <span className="settings-about__value">{APP_VERSION}</span>
               </div>
               <div className="settings-about__item">
                 <span className="settings-about__label">制作人</span>
@@ -248,12 +280,178 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
                 <span className="settings-about__label">联系邮箱</span>
                 <span className="settings-about__value">3117797385@qq.com</span>
               </div>
+              <div className="settings-about__item">
+                <span className="settings-about__label">下载地址</span>
+                <span className="settings-about__value" style={{ color: 'var(--primary-color)', cursor: 'pointer' }}
+                  onClick={() => window.electronAPI?.send('shell:open', 'https://github.com/ya-chang/nilian/releases')}>
+                  GitHub Releases
+                </span>
+              </div>
+              <div className="settings-about__item">
+                <span className="settings-about__label">检查更新</span>
+                <span className="settings-about__value" style={{ color: 'var(--primary-color)', cursor: 'pointer' }}
+                  onClick={() => window.electronAPI?.send('shell:open', 'https://github.com/ya-chang/nilian/releases/latest')}>
+                  检查最新版本
+                </span>
+              </div>
             </div>
             <p className="settings-about__desc">
               感谢使用拟恋！如果你有任何建议或问题，欢迎通过邮箱联系我们。
             </p>
           </div>
         </div>
+      </div>
+      {showPlugins && <PluginPage onClose={() => setShowPlugins(false)} />}
+    </div>
+  )
+}
+
+// ─── 数据备份设置 ───
+
+function BackupSettings(): React.JSX.Element {
+  const [config, setConfig] = useState({ maxBackups: 7, backupHour: 3, backupMinute: 0 })
+  const [lastBackup, setLastBackup] = useState<string | null>(null)
+  const [backups, setBackups] = useState<Array<{ date: string; size: number }>>([])
+  const [status, setStatus] = useState('')
+
+  useEffect(() => {
+    loadConfig()
+    loadBackups()
+  }, [])
+
+  const loadConfig = async (): Promise<void> => {
+    try {
+      const result = await window.electronAPI?.invoke('backup:get-config')
+      if (result && typeof result === 'object') {
+        setConfig(result as { maxBackups: number; backupHour: number; backupMinute: number })
+      }
+    } catch { /* ignore */ }
+  }
+
+  const loadBackups = async (): Promise<void> => {
+    try {
+      const list = await window.electronAPI?.invoke('backup:list')
+      if (Array.isArray(list)) setBackups(list)
+      const statusResult = await window.electronAPI?.invoke('backup:get-status')
+      if (statusResult && typeof statusResult === 'object' && 'lastBackup' in statusResult) {
+        setLastBackup((statusResult as { lastBackup: string | null }).lastBackup)
+      }
+    } catch { /* ignore */ }
+  }
+
+  const handleBackupNow = async (): Promise<void> => {
+    setStatus('备份中...')
+    try {
+      const result = await window.electronAPI?.invoke('backup:now') as { success: boolean; date: string }
+      if (result?.success) {
+        setStatus('备份完成')
+        loadBackups()
+      } else {
+        setStatus('备份失败')
+      }
+    } catch {
+      setStatus('备份失败')
+    }
+    setTimeout(() => setStatus(''), 3000)
+  }
+
+  const handleRestore = async (date: string): Promise<void> => {
+    if (!confirm(`确定恢复 ${date} 的备份？当前数据将被覆盖。`)) return
+    try {
+      const result = await window.electronAPI?.invoke('backup:restore', { date }) as { success: boolean }
+      if (result?.success) {
+        setStatus('恢复完成，请重启应用')
+      } else {
+        setStatus('恢复失败')
+      }
+    } catch {
+      setStatus('恢复失败')
+    }
+  }
+
+  const handleConfigChange = async (updates: Partial<typeof config>): Promise<void> => {
+    const newConfig = { ...config, ...updates }
+    setConfig(newConfig)
+    await window.electronAPI?.invoke('backup:set-config', newConfig)
+  }
+
+  const formatSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  return (
+    <div className="settings-section">
+      <h4>数据备份</h4>
+      <p className="settings-hint">自动备份数据，崩溃后可恢复</p>
+
+      <div className="settings-data-actions">
+        {/* 备份状态 */}
+        <div className="settings-data-item">
+          <div>
+            <div className="settings-data-title">自动备份</div>
+            <div className="settings-data-desc">
+              每天 {String(config.backupHour).padStart(2, '0')}:{String(config.backupMinute).padStart(2, '0')} 自动备份，保留 {config.maxBackups} 份
+              {lastBackup && ` · 上次备份：${lastBackup}`}
+            </div>
+          </div>
+          <button className="settings-btn" onClick={handleBackupNow} disabled={status === '备份中...'}>
+            {status || '立即备份'}
+          </button>
+        </div>
+
+        {/* 备份配置 */}
+        <div style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: 8, marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 8 }}>
+            <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', minWidth: 60 }}>备份时间</label>
+            <input
+              type="number"
+              min={0}
+              max={23}
+              value={config.backupHour}
+              onChange={(e) => handleConfigChange({ backupHour: Number(e.target.value) })}
+              style={{ width: 50, padding: '4px 8px', border: '1px solid var(--border-color)', borderRadius: 4, fontSize: 'var(--font-size-sm)' }}
+            />
+            <span>:</span>
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={config.backupMinute}
+              onChange={(e) => handleConfigChange({ backupMinute: Number(e.target.value) })}
+              style={{ width: 50, padding: '4px 8px', border: '1px solid var(--border-color)', borderRadius: 4, fontSize: 'var(--font-size-sm)' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', minWidth: 60 }}>保留份数</label>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={config.maxBackups}
+              onChange={(e) => handleConfigChange({ maxBackups: Number(e.target.value) })}
+              style={{ width: 50, padding: '4px 8px', border: '1px solid var(--border-color)', borderRadius: 4, fontSize: 'var(--font-size-sm)' }}
+            />
+            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)' }}>份（超出自动清理）</span>
+          </div>
+        </div>
+
+        {/* 备份历史 */}
+        {backups.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', marginBottom: 8 }}>备份历史</div>
+            {backups.slice(0, 10).map((b) => (
+              <div key={b.date} className="settings-data-item" style={{ marginBottom: 4 }}>
+                <div>
+                  <span style={{ fontSize: 'var(--font-size-sm)' }}>{b.date}</span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', marginLeft: 8 }}>{formatSize(b.size)}</span>
+                </div>
+                <button className="settings-btn" onClick={() => handleRestore(b.date)}>恢复</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

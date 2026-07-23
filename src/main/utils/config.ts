@@ -67,7 +67,7 @@ providers:
 default:
   provider: deepseek
   model: deepseek-v4-flash
-  temperature: 0.8
+  temperature: 0.7
   maxTokens: 1024
 `
   writeFileSync(join(globalDir, 'models.yaml'), defaultModelsYaml, 'utf-8')

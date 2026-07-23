@@ -3,9 +3,18 @@
 
 import { join } from 'path'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { app } from 'electron'
 import { logger } from './logger'
 
-const SETTINGS_FILE = join(process.cwd(), 'data', 'global', 'settings.json')
+// 打包后用 userData，开发时用 cwd/data
+const getBaseDir = (): string => {
+  if (app.isPackaged) {
+    return app.getPath('userData')
+  }
+  return join(process.cwd(), 'data')
+}
+
+const SETTINGS_FILE = join(getBaseDir(), 'global', 'settings.json')
 
 interface AppSettings {
   dataDir: string
@@ -13,7 +22,7 @@ interface AppSettings {
   fontSize: number
 }
 
-const DEFAULT_DATA_DIR = join(process.cwd(), 'data', 'app')
+const DEFAULT_DATA_DIR = join(getBaseDir(), 'app')
 
 // 加载设置
 const loadSettings = (): AppSettings => {
@@ -31,7 +40,7 @@ const loadSettings = (): AppSettings => {
 // 保存设置
 const saveSettings = (settings: AppSettings): void => {
   try {
-    const dir = join(process.cwd(), 'data', 'global')
+    const dir = join(getBaseDir(), 'global')
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true })
     }
@@ -65,12 +74,22 @@ export const getSubDir = (subdir: string): string => {
   return fullPath
 }
 
+// 获取日志目录
+export const getLogDir = (): string => {
+  const logDir = join(getBaseDir(), 'logs')
+  if (!existsSync(logDir)) {
+    mkdirSync(logDir, { recursive: true })
+  }
+  return logDir
+}
+
 // 预定义的子目录
 export const PATHS = {
+  get base() { return getBaseDir() },
   get avatars() { return getSubDir('avatars') },
   get characters() { return getSubDir('characters') },
   get memories() { return getSubDir('memories') },
   get emotions() { return getSubDir('emotions') },
   get moments() { return getSubDir('moments') },
-  get logs() { return getSubDir('logs') },
+  get logs() { return getLogDir() },
 }

@@ -3,12 +3,13 @@
 
 .chat-window {
   flex: 1;
-  min-width: 400px;
-  height: 100vh;
+  min-width: 0;
+  height: 100%;
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 /* 消息列表区域 */
@@ -17,6 +18,13 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 16px 20px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .chat-window__messages {
+    padding: 12px 12px;
+  }
 }
 
 /* 空状态 */
@@ -45,4 +53,25 @@
 .chat-window__empty-subtitle {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+}
+
+/* 标题栏包裹层 */
+.chat-window__titlebar-wrap {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  -webkit-app-region: drag;
+  user-select: none;
+  padding: 0 8px 0 0;
+  gap: 8px;
+}
+
+.chat-window__titlebar-wrap .chat-window__titlebar {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border-bottom: none;
+  padding: 0;
 }

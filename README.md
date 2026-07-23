@@ -1,3 +1,30 @@
+<p align="center">
+  <strong>🇬🇧 English</strong> | <a href="#-中文文档">中文</a>
+</p>
+
+**Moli（茉莉）** is an open-source AI companion desktop app with **persistent memory**, a **10-dimension emotion model**, and a **learning engine** that adapts to you over time.
+
+> Your AI companion remembers everything you say, gets emotional, and becomes more like a real person the longer you chat.
+
+| Feature | Description |
+|:---|:---|
+| 🧠 Memory System | Short-term + long-term + vector search + auto-summarization |
+| 💗 Emotion Model | 10 dimensions: happiness, sadness, anger, trust, intimacy, patience... |
+| 📖 Learning Engine | Learns your communication style, interests, and preferences |
+| ⏰ Proactive Messages | Good morning, good night, "I miss you", holiday awareness (50+ holidays) |
+| 🎵 Music Awareness | Detects what you're listening to, adapts conversation context |
+| 🎤 Voice Messages | MiMo TTS with voice cloning support |
+| 🔌 Multi-Provider | MiMo / DeepSeek / OpenAI / Ollama, OpenAI-compatible format |
+| 💾 Privacy First | 100% local storage, no cloud, no data collection |
+| 🔌 Plugin System | Extensible with community plugins, sandboxed execution |
+
+[⬇️ Download](https://nilian.ysf.pw) · [📖 Docs](https://nilian.ysf.pw)
+
+---
+
+<a id="-中文文档"></a>
+
+
 <div align="center">
 
 <img src="resources/preview.png" alt="Moli 预览" width="600" />

@@ -1,7 +1,6 @@
-// src/renderer/components/chat/EmptyState.tsx
+﻿// src/renderer/components/chat/EmptyState.tsx
 // 空状态组件 — 各种场景的空状态提示
 
-import React from 'react'
 import './EmptyState.css'
 
 interface EmptyStateProps {

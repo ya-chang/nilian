@@ -1,7 +1,8 @@
 // src/renderer/components/layout/TitleBar.tsx
-// 聊天窗口标题栏 — "⋯"菜单：修改拍一拍后缀 + 对象头像 + 删除对象
+// 聊天窗口标题栏 — "⋯"菜单 + 语音合成按钮
 
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { VoicePanel } from '../tts/VoicePanel'
 import './TitleBar.css'
 
 interface TitleBarProps {
@@ -12,8 +13,10 @@ interface TitleBarProps {
   onPatSuffixChange?: (suffix: string) => void
   onAvatarChange?: (dataUrl: string) => void
   onDelete?: () => void
+  onSearch?: () => void
   currentPatSuffix?: string
   characterId?: string
+  onBack?: () => void
 }
 
 export function TitleBar({
@@ -24,12 +27,16 @@ export function TitleBar({
   onPatSuffixChange,
   onAvatarChange,
   onDelete,
+  onSearch,
   currentPatSuffix,
-  characterId
+  characterId,
+  onBack
 }: TitleBarProps): React.JSX.Element {
   const [showMenu, setShowMenu] = useState(false)
   const [showSuffixInput, setShowSuffixInput] = useState(false)
   const [suffixValue, setSuffixValue] = useState(currentPatSuffix || '小脑袋')
+  const [showVoice, setShowVoice] = useState(false)
+  const [ttsEnabled, setTtsEnabled] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const suffixInputRef = useRef<HTMLInputElement>(null)
@@ -37,6 +44,38 @@ export function TitleBar({
   useEffect(() => {
     setSuffixValue(currentPatSuffix || '小脑袋')
   }, [currentPatSuffix])
+
+  // 监听 TTS 状态（从角色配置读取）
+  useEffect(() => {
+    if (!characterId) return
+    const loadTtsState = async (): Promise<void> => {
+      try {
+        const charList = await window.electronAPI?.invoke('character:list') as Array<Record<string, unknown>> | null
+        const charData = charList?.find(c => c.id === characterId)
+        if (charData) {
+          setTtsEnabled(!!charData.ttsEnabled)
+        }
+      } catch { /* ignore */ }
+    }
+    loadTtsState()
+  }, [characterId])
+
+  // 监听自定义事件：VoicePanel 关闭时刷新 TTS 状态
+  useEffect(() => {
+    const handler = (): void => {
+      if (!characterId) return
+      window.electronAPI?.invoke('character:list').then((charList) => {
+        if (Array.isArray(charList)) {
+          const charData = charList.find((c: Record<string, unknown>) => c.id === characterId)
+          if (charData) {
+            setTtsEnabled(!!charData.ttsEnabled)
+          }
+        }
+      }).catch(() => {})
+    }
+    window.addEventListener('tts:refresh', handler)
+    return () => window.removeEventListener('tts:refresh', handler)
+  }, [characterId])
 
   useEffect(() => {
     if (!showMenu) return
@@ -107,6 +146,11 @@ export function TitleBar({
       <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
 
       <div className="titlebar__left">
+        {onBack && (
+          <button className="titlebar__back-btn" onClick={onBack} title="返回">
+            ←
+          </button>
+        )}
         <span className="titlebar__name">
           {isTyping ? '对方正在输入中...' : name}
         </span>
@@ -155,19 +199,19 @@ export function TitleBar({
       </div>
 
       <div className="titlebar__right">
-        <button className="titlebar__btn" onClick={() => window.electronAPI?.minimize()} title="最小化">
-          <svg width="12" height="12" viewBox="0 0 12 12"><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1" /></svg>
-        </button>
-        <button className="titlebar__btn" onClick={() => window.electronAPI?.maximize()} title="最大化">
-          <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1" /></svg>
-        </button>
-        <button className="titlebar__btn titlebar__btn--close" onClick={() => window.electronAPI?.close()} title="关闭">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" strokeWidth="1" />
-            <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" strokeWidth="1" />
-          </svg>
+        {/* 语音合成按钮 */}
+        <button
+          className={`titlebar__btn ${ttsEnabled ? 'titlebar__btn--tts-active' : ''}`}
+          title={ttsEnabled ? '语音合成已启用' : '语音合成'}
+          onClick={() => setShowVoice(!showVoice)}
+        >
+          <span style={{ fontSize: 16 }}>{ttsEnabled ? '🔊' : '🔇'}</span>
         </button>
       </div>
+
+      {showVoice && (
+        <VoicePanel onClose={() => setShowVoice(false)} characterId={characterId} />
+      )}
     </div>
   )
 }

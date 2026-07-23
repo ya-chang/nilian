@@ -1,62 +1,30 @@
 {
-  "name": "ni-lian",
-  "version": "1.0.0",
-  "description": "拟恋 - AI虚拟伴侣桌面应用",
-  "main": "./out/main/index.js",
-  "author": "拟恋团队",
+  "name": "ni-lian-mobile",
+  "version": "1.4.0",
+  "description": "拟恋 - AI虚拟伴侣",
+  "type": "module",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "build:win": "electron-vite build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux",
-    "preview": "electron-vite preview",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "cap:init": "npx cap init '拟恋' 'com.nilian.app' --web-dir dist",
+    "cap:add": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android",
     "typecheck": "tsc --noEmit"
-  },
-  "build": {
-    "appId": "com.ni-lian.app",
-    "productName": "拟恋",
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ],
-      "icon": "resources/icon.png"
-    },
-    "mac": {
-      "target": [
-        "dmg"
-      ],
-      "icon": "resources/icon.png"
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "icon": "resources/icon.png"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "shortcutName": "拟恋"
-    }
   },
   "dependencies": {
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "yaml": "^2.9.0",
     "zustand": "^5.0.5"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
-    "electron": "^33.4.0",
-    "electron-builder": "^25.1.8",
-    "electron-vite": "^4.0.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   }

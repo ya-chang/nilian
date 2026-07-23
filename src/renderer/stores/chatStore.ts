@@ -1,26 +1,17 @@
 // src/renderer/stores/chatStore.ts
-// 聊天状态管理 — 按角色隔离消息 + 文件系统持久化
+// 聊天状态管理 — 按角色隔离消息 + localStorage 持久化
 
 import { create } from 'zustand'
+import { ChatService, type Message } from '../services/ChatService'
 
-export interface Message {
-  id: string
-  characterId: string
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  type: 'text' | 'pat' | 'red_packet' | 'emoji'
-  timestamp: number
-  status: 'sending' | 'sent' | 'error'
-  error?: string
-  metadata?: Record<string, unknown>
-}
+export type { Message }
 
 type AddMessageInput = Omit<Message, 'id' | 'timestamp' | 'status' | 'characterId'> & {
   type?: Message['type']
   metadata?: Record<string, unknown>
 }
 
-// 延迟保存 — 避免每条消息都写文件
+// 延迟保存 — 避免每条消息都写 storage
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 let pendingSave: { characterId: string; messages: Message[] } | null = null
 
@@ -29,10 +20,7 @@ const debouncedSave = (characterId: string, messages: Message[]): void => {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     if (pendingSave) {
-      window.electronAPI?.invoke('chat:saveMessages', {
-        characterId: pendingSave.characterId,
-        messages: pendingSave.messages
-      })
+      ChatService.saveMessages(pendingSave.characterId, pendingSave.messages)
       pendingSave = null
     }
   }, 500)
@@ -45,9 +33,9 @@ interface ChatState {
   isLoading: boolean
 
   setCurrentCharacter: (characterId: string) => void
-  loadCharacterMessages: (characterId: string) => Promise<void>
+  loadCharacterMessages: (characterId: string) => void
   addMessage: (msg: AddMessageInput) => string
-  updateMessage: (id: string, updates: Partial<Message>) => void
+  updateMessage: (id: string, updates: Partial<Message>, targetCharacterId?: string) => void
   setLoading: (loading: boolean) => void
   clearMessages: () => void
   clearCharacterMessages: (characterId: string) => void
@@ -59,35 +47,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
   currentCharacterId: null,
   isLoading: false,
 
-  // 切换角色 — 从文件加载该角色的消息
   setCurrentCharacter: (characterId: string) => {
     const state = get()
-    // 如果已有缓存，直接切换
     if (state.messagesByCharacter[characterId]) {
       set({ currentCharacterId: characterId, messages: state.messagesByCharacter[characterId] })
       return
     }
-    // 否则异步加载
     set({ currentCharacterId: characterId, messages: [] })
     get().loadCharacterMessages(characterId)
   },
 
-  // 从文件系统加载消息
-  loadCharacterMessages: async (characterId: string) => {
-    try {
-      const result = await window.electronAPI?.invoke('chat:loadMessages', { characterId }) as {
-        success: boolean
-        data?: Message[]
-      }
-      if (result?.success && result.data) {
-        set((state) => ({
-          messagesByCharacter: { ...state.messagesByCharacter, [characterId]: result.data! },
-          messages: state.currentCharacterId === characterId ? result.data! : state.messages
-        }))
-      }
-    } catch {
-      // 加载失败，使用空消息
-    }
+  loadCharacterMessages: (characterId: string) => {
+    const data = ChatService.loadMessages(characterId) as Message[]
+    set((state) => ({
+      messagesByCharacter: { ...state.messagesByCharacter, [characterId]: data },
+      messages: state.currentCharacterId === characterId ? data : state.messages
+    }))
   },
 
   addMessage: (msg) => {
@@ -115,15 +90,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: updatedMessages
     })
 
-    // 延迟保存到文件
     debouncedSave(characterId, updatedMessages)
-
     return id
   },
 
-  updateMessage: (id, updates) => {
+  updateMessage: (id, updates, targetCharacterId?) => {
     const state = get()
-    const characterId = state.currentCharacterId || 'default'
+    const characterId = targetCharacterId || state.currentCharacterId || 'default'
 
     const characterMessages = state.messagesByCharacter[characterId] || []
     const updatedMessages = characterMessages.map((m) =>
@@ -134,12 +107,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       [characterId]: updatedMessages
     }
 
+    const shouldUpdateMessages = characterId === state.currentCharacterId
+
     set({
       messagesByCharacter: newData,
-      messages: updatedMessages
+      ...(shouldUpdateMessages ? { messages: updatedMessages } : {})
     })
 
-    // 延迟保存到文件
     debouncedSave(characterId, updatedMessages)
   },
 
@@ -171,7 +145,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: state.currentCharacterId === characterId ? [] : state.messages
     })
 
-    // 删除文件
-    window.electronAPI?.invoke('chat:deleteMessages', { characterId })
+    ChatService.saveMessages(characterId, [])
   }
 }))

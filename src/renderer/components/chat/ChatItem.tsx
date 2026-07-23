@@ -1,7 +1,7 @@
-// src/renderer/components/chat/ChatItem.tsx
+﻿// src/renderer/components/chat/ChatItem.tsx
 // 单个聊天列表项 — 支持图片头像
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './ChatItem.css'
 
 interface ChatItemProps {

@@ -1,7 +1,7 @@
-// src/renderer/components/SplashScreen.tsx
+﻿// src/renderer/components/SplashScreen.tsx
 // 启动画面 — 应用加载时显示
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './SplashScreen.css'
 
 interface SplashScreenProps {

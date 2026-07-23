@@ -1,18 +1,21 @@
 // src/renderer/App.tsx
-// 根组件 — 启动时从后端加载角色 + 同步聊天列表
+// 根组件 — 启动时从本地存储加载角色
 
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { AppLayout } from './components/layout/AppLayout'
 import { useUserStore } from './stores/userStore'
 import { useChatStore } from './stores/chatStore'
 import { useChatListStore } from './stores/chatListStore'
+import { CharacterService } from './services/CharacterService'
+import { TTSService } from './services/TTSService'
 
 function App(): React.JSX.Element {
   const loadAvatar = useUserStore((s) => s.loadAvatar)
 
   useEffect(() => {
     loadAvatar()
-    loadCharactersFromBackend()
+    TTSService.loadConfig()
+    loadCharactersFromStorage()
 
     // 启动时应用保存的主题
     try {
@@ -41,30 +44,20 @@ function App(): React.JSX.Element {
 }
 
 /**
- * 启动时从后端加载所有已有角色，同步到聊天列表
- * 这样重启后角色不会消失
+ * 从本地存储加载角色到聊天列表
  */
-async function loadCharactersFromBackend(): Promise<void> {
+function loadCharactersFromStorage(): void {
   try {
-    const result = await window.electronAPI?.invoke('character:list')
-    if (!result || !Array.isArray(result)) return
-
+    const chars = CharacterService.getAll()
     const chatListStore = useChatListStore.getState()
 
-    for (const char of result) {
-      // 安全取值，防止后端返回异常数据
-      const id = (char as Record<string, unknown>)?.id
-      const name = (char as Record<string, unknown>)?.name
-      const avatar = (char as Record<string, unknown>)?.avatar
-
-      if (typeof id !== 'string' || typeof name !== 'string') continue
-
-      const exists = chatListStore.sessions.some((s) => s.id === id)
+    for (const char of chars) {
+      const exists = chatListStore.sessions.some((s) => s.id === char.id)
       if (!exists) {
         chatListStore.addSession({
-          id,
-          name,
-          avatar: typeof avatar === 'string' ? avatar : '🌸',
+          id: char.id,
+          name: char.name,
+          avatar: char.avatar || '🌸',
           lastMessage: '开始聊天吧~',
           time: '',
           unread: 0,
@@ -72,16 +65,6 @@ async function loadCharactersFromBackend(): Promise<void> {
           pinned: false,
           avatarVersion: 0
         })
-      }
-
-      // 同步最新消息
-      const chatData = useChatStore.getState().messagesByCharacter[id]
-      if (chatData && chatData.length > 0) {
-        const lastMsg = chatData[chatData.length - 1]
-        const content = lastMsg.content.length > 20
-          ? lastMsg.content.slice(0, 20) + '...'
-          : lastMsg.content
-        useChatListStore.getState().updateLastMessage(id, content)
       }
     }
   } catch (error) {

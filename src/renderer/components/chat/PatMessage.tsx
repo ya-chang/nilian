@@ -1,7 +1,6 @@
-// src/renderer/components/chat/PatMessage.tsx
+﻿// src/renderer/components/chat/PatMessage.tsx
 // 拍一拍消息 — 居中灰色小字，时间在文字上面
 
-import React from 'react'
 import './PatMessage.css'
 
 interface PatMessageProps {

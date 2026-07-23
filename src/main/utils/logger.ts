@@ -3,6 +3,7 @@
 
 import { appendFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
+import { app } from 'electron'
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
@@ -23,17 +24,19 @@ const formatTime = (): string => {
   return new Date().toISOString()
 }
 
-// 日志目录
-const LOG_DIR = join(process.cwd(), 'logs')
-try {
-  if (!existsSync(LOG_DIR)) {
-    mkdirSync(LOG_DIR, { recursive: true })
+// 日志目录 — 打包后用 userData，开发时用 cwd/logs
+const getLogDir = (): string => {
+  const baseDir = app.isPackaged ? app.getPath('userData') : join(process.cwd(), 'data')
+  const logDir = join(baseDir, 'logs')
+  if (!existsSync(logDir)) {
+    mkdirSync(logDir, { recursive: true })
   }
-} catch { /* ignore */ }
+  return logDir
+}
 
 const getLogFile = (): string => {
   const date = new Date().toISOString().split('T')[0]
-  return join(LOG_DIR, `${date}.log`)
+  return join(getLogDir(), `${date}.log`)
 }
 
 const writeLog = (level: string, msg: string, args: unknown[]): void => {
